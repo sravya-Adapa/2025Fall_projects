@@ -1,4 +1,4 @@
-# Monte Carlo Simulation of Global Supply Chain Disruptions and Their Impact on U.S. Automotive Exports
+# Monte Carlo Simulation of Supplier Disruptions and Their Impact on an EV Manufacturer’s Production
 
 ## Team Members
 - **Dhyey Kasundra**  
@@ -9,30 +9,31 @@
 
 
 ## Project Description
-This project simulates how disruptions in the international trade of automotive parts and raw materials affect the **U.S. automotive industry’s ability to produce and export vehicles**.
+This project simulates how disruptions in a **giant electric vehicle manufacturing firm like Tesla**, in their supplier network affect it’s ability to **produce vehicles and control production cost**.
 
-The automotive sector depends heavily on imported inputs such as **steel, aluminum, semiconductors, batteries, plastics, and rubber**. When global supply chain shocks occur—such as **port shutdowns, geopolitical tensions, or natural disasters**—imports from key supplier countries can decline sharply. These disruptions can constrain the supply of essential inputs to U.S. manufacturing plants and ultimately **reduce U.S. automotive export capacity**.
+An EV manufacturer depends on key component families like **battery systems, power electronics, motors/drive units, body/metals, interior/trim, plastics/rubber, and electronics**. When supply shocks occur due to factory outages, quality recalls, logistics delays, or regional events inputs from critical suppliers can drop suddenly. These disruptions constrain component availability at the plant and reduce finished-vehicle.
 
 The Monte Carlo simulation combines:
-- **UN Comtrade trade data** – to quantify how much the U.S. relies on each supplier country for key materials.  
-- **World Bank indices** – logistics performance and political stability indicators, used to estimate each country’s probability of trade disruption.  
+- **BEA Input–Output (Direct Requirements)** — to estimate **component-category weights** per $1 of motor-vehicle output as an proxy to “BOM (Bill of Materials) by category”) since the EV manufacturing company’s BOM data is proprietary.  
+- **Public supplier lists (articles)** — to derive a rough idea about the companies who contribute to Tesla’s EV production, and **map supplier names to component categories** for labeling the network.
+- **Firm public filings (units/COGS)** — Tesla’s quarterly financial reports provide data related to **number of EV quantities and cost of goods sold**, to scale results to an EV production context.
 
-Each supplier country is represented as a **node** connected to a **U.S. automotive manufacturing node**, with:
-- **Edge weights** proportional to import shares, and  
-- **Node attributes** derived from reliability/risk indicators.
+The supply chain network is **two-layered** with:
+- **Layer 1 (BOM by category)**: the EV product node connects to component-category nodes, **edge weights** are the BEA-derived shares.
+- **Layer 2 (named suppliers)**: each category node connects to its known multiple suppliers whose names are derived from the publicly available articles, **within-category splits** are clearly marked assumptions (randomized allocations that sum to the category weight, used only for proof-of-concept exploration).
 
-Monte Carlo simulations introduce random disruptions to these supplier nodes across **10,000 runs**, capturing how failures in one or multiple countries propagate through the network. The model produces a **probabilistic assessment of export vulnerability**, identifying which materials or countries contribute most to potential production shortfalls.
+Monte Carlo simulations introduce random disruptions to these supplier nodes across **10,000 runs**, capturing how failures in one or multiple suppliers propagate through the network. The model produces a **probabilistic assessment of production vulnerability**, identifying which component categories and supplier groupings contribute most to potential production shortfalls.
 
-A **NetworkX-based visualization** will illustrate the global supplier network, highlighting **high-risk connections** where disruptions have the largest simulated impact.
+A **NetworkX-based visualization** will illustrate the firm’s supplier network, EV product to component categories (weighted edges), then categories to labeled suppliers (assumed splits), highlighting **high-impact links** where simulated disruptions have the largest effect on production.
 
 
 ## Hypotheses
 
-**H1:** Disruptions in imports of high-weight inputs such as steel and semiconductors will cause disproportionately higher reductions in simulated U.S. automotive export capacity compared to disruptions in lower-weight materials such as rubber and plastics.
+**H1:** Failures in high-weight component categories (battery systems, electronics, primary metals) will drive most of the simulated production loss. In the baseline, the top **two categories** will account for the **majority** of expected production shortfalls.
 
-**H2:** Increasing the number of supplier countries per input category (i.e., more diversified sourcing) reduces expected export loss by at least **25–30%** relative to concentrated sourcing scenarios.
+**H2:** Within a component category, **spreading volume across more suppliers** (lower concentration/HHI) will reduce both **average loss and tail risk** compared with keeping one dominant supplier at the same total category weight.
 
-**H3:** When correlated disruptions occur among high-risk supplier countries in the **East Asian region** (e.g., China, Japan, South Korea, Taiwan), total simulated export losses will exceed independent-shock predictions by at least **20–25%**, indicating **systemic regional vulnerability**.
+**H3:** When **several suppliers fail together** due to a common event (same region or shared sub-tier), the simulated production loss will be **much higher** than under independent failures, with p95 loss rising sharply.
 
 
 ## GitHub Repository
@@ -41,14 +42,20 @@ A **NetworkX-based visualization** will illustrate the global supplier network, 
 
 ## Data Sources & References
 
-- **UN Comtrade Database** – Bilateral U.S. trade data for HS 8701–8708  
-  [https://comtradeplus.un.org/](https://comtradeplus.un.org/)
+- **Alsettevs public article (For list of suppliers)** –  
+  [https://alsettevs.com/who-are-the-suppliers-of-tesla-parts/](https://alsettevs.com/who-are-the-suppliers-of-tesla-parts/)
 
-- **World Bank Logistics Performance Index & Political Risk Indicators**  
-  [https://data.worldbank.org/](https://data.worldbank.org/)
-
-- **BEA Input–Output Tables (Industry by Commodity)**  
+- **BEA Input–Output Tables (Industry by Commodity)** - 
   [https://www.bea.gov/data/special-topics/input-output](https://www.bea.gov/data/special-topics/input-output)
+
+- **Investopedia public article (For list of suppliers)** -
+  [https://www.investopedia.com/ask/answers/052815/who-are-teslas-tsla-main-suppliers.asp](https://www.investopedia.com/ask/answers/052815/who-are-teslas-tsla-main-suppliers.asp)
+
+- **SEC data (For COGS from Tesla’s annual reports)** - 
+  [https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=TSLA&type=10-K&dateb=&owner=exclude&count=100](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=TSLA&type=10-K&dateb=&owner=exclude&count=100)
+
+- **Tesla’s Statista Report (For No. of units)** - 
+  [https://www-statista-com.proxy2.library.illinois.edu/study/23072/tesla-statista-dossier/](https://www-statista-com.proxy2.library.illinois.edu/study/23072/tesla-statista-dossier/)
 
 - **Gupta, R., Li, J., & Fernandez, P. (2025).** *Evaluating risk factors in automotive supply chains: Implications for resilience.*  
   *Journal of Manufacturing Systems.* Elsevier.  
