@@ -6,8 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import math
 from typing import Dict,Tuple,List,Optional
-
-from Simulation import NUM_SIMS, P_FAIL_BASE, TOTAL_COGS_REFERENCE
+from Simulation import *
 
 """
 Hypothesis 2: Within a industry category, spreading volume across more suppliers (lower concentration/HHI) 
@@ -48,18 +47,6 @@ def ensure_digraph(obj) -> nx.DiGraph:
     """
     G = load_graph_from_pickle(obj) if isinstance(obj, str) else obj
     return assert_directed(G)
-
-def load_industry_cogs():
-    """
-    Loads the preprocessed data file and extract the dictionary of cogs allocated value for each industries.
-    """
-    csv_path = os.path.join(base_dir, "Tesla_specific_data", "preprocessed_data", "component_weights_2024_percent.csv")
-    df = pd.read_csv(csv_path)
-    df.columns = df.columns.str.strip()
-    cogs_industry = df.set_index('component_industry_description')['cogs_allocated_usd'].to_dict()
-
-    return cogs_industry
-
 
 # ========== Edge-Weight utilities ==========
 
