@@ -450,14 +450,14 @@ if __name__ == "__main__":
         print(f"Tail p-value (paired bootstrap): {res['p_value_tail']:.3g}")
         print(f"\nVerdict on hypothesis: {res['verdict']}\n")
 
-        # --- same visuals, per industry ---
+        # same visuals, per industry
         quick_plots(
             res["control_loss"],
             res["treatment_loss"],
             title_suffix=f"(HHI test)"
         )
 
-        # optional summary row
+        # for table at the end, summary row
         rows.append({
             "Industry": res["target_industry"],
             "HHI_base": res["base_hhi"],
