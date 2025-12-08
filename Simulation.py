@@ -91,6 +91,7 @@ def simulation(G, cogs_map):
         # step 2 calculate remaining COGS %
         total_COGS_available = 0.0 # per run sum for simulated COGS
         remaining_industry_percentage = {} # empty dict to track each industry's surviving percentage
+        loss_attribution = {ind: 0.0 for ind in industries}
 
         for industry in industries: # This loop runs remaining share after supplier disruptions
             percentage_left = 1.0 #initialize with 100 percent
@@ -105,9 +106,12 @@ def simulation(G, cogs_map):
             # Value Left = Original Dollar Amount * % Available
             value_left = original_industry_cogs[industry] * percentage_left # converts share into final COGS value
             total_COGS_available += value_left # summation across industries to figure out total impact
+
+
+
         simulated_total_cogs_results.append(total_COGS_available)
 
-        # step -3 Find bottleneck industry
+        # step 3 Find bottleneck industry
         # Identifies the most starved industry in this run (smallest surviving percentage).
         # If there’s any shortfall (<100%), increments that industry’s bottleneck counter.
 
@@ -355,7 +359,8 @@ if __name__ == "__main__":
         freq = (count / NUM_SIMS) * 100
         print(f"{ind}{' ' * (40 - len(str(ind)))} | {freq:.1f}% of runs")
 
-    # before animation
+
+    #before animation
     PRECOMP = precompute_runs(G, industry_cogs, total_runs=10_000, p_fail=P_FAIL_BASE, root='Tesla', seed=1)
 
 
