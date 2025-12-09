@@ -415,7 +415,7 @@ if __name__ == "__main__":
         )
 
 
-        print("\n=== HHI Experiment Report ===")
+        print("\n=== H2 Experiment Report ===")
         print(f"Industry: {res['target_industry']}")
         print(f"HHI (baseline):  {res['base_hhi']:.4f}")
         print(f"HHI (treatment): {res['treat_hhi']:.4f}")
