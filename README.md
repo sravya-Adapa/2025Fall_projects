@@ -144,7 +144,8 @@ The canonical file `supply_chain_graph/tesla_supply_chain_graph_2024.pkl` is cre
 This structure makes the interpretation of shocks unambiguous, a supplier failure reduces its industry’s available share, which in turn reduces Tesla’s effective COGS contribution for that category. With **validated direction and traceable weights**, the graph is a defensible basis for Monte Carlo analysis and hypothesis testing.
 
 ### Figure: Tesla two-layer supplier network with category weights.
-![network graph](https://github.com/user-attachments/assets/bf90923a-b9c6-4650-b6e4-88fa9428271e)
+<img width="581" height="497" alt="network graph" src="https://github.com/user-attachments/assets/dd240f7e-7786-4f75-bd28-233328cfaed8" />
+
 
 ---
 
