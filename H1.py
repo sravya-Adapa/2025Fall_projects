@@ -1,6 +1,4 @@
 from helper_functions import *
-from scipy import stats
-
 
 def simulation(G, cogs_map):
     """

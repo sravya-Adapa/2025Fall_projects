@@ -1,6 +1,7 @@
 from helper_functions import *
 
 
+
 """
 Hypothesis 2: Within a industry category, spreading volume across more suppliers (lower concentration/HHI) 
 will reduce both average loss and tail risk compared with keeping one dominant supplier at the same total 
@@ -246,10 +247,8 @@ def run_h2_experiment(
     t_stat = mean_diff / (sd_diff / math.sqrt(num_runs)) if sd_diff > 0 else float("inf")
 
     try:
-        import scipy.stats as st
         p_value_mean = 2 * st.t.sf(abs(t_stat), df=num_runs - 1)
     except Exception:
-        from math import erf, sqrt
         p_value_mean = 2 * (1 - 0.5 * (1 + erf(abs(t_stat) / sqrt(2))))
 
     # Tail (95th percentile) + paired bootstrap p-value
@@ -316,13 +315,11 @@ def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str =
     mu, sigma = diff.mean(), diff.std(ddof=1)
     q = np.linspace(0.01, 0.99, 99)
     emp = np.quantile(diff, q)
+
     try:
-        from scipy.stats import norm
         theo = norm.ppf(q, loc=mu, scale=sigma)
     except Exception:
         # normal approx fallback
-        from math import sqrt
-        from statistics import NormalDist
         nd = NormalDist(mu, sigma if sigma>0 else 1.0)
         theo = np.array([nd.inv_cdf(float(p)) for p in q])
 

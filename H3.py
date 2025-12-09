@@ -1,7 +1,4 @@
-from typing import Dict,Tuple,List,Optional,Any
-import math
 from helper_functions import *
-
 
 """
 Hypothesis 3: When several suppliers fail together due to a common event (same region or shared sub-tier), 
@@ -230,10 +227,8 @@ def run_h3_experiment(
     t_stat = mean_diff / (sd_diff / math.sqrt(num_runs)) if sd_diff > 0 else float("inf")
     # Try scipy t; fall back to normal approx
     try:
-        import scipy.stats as st
         p_value_mean = 2 * st.t.sf(abs(t_stat), df=num_runs - 1)
     except Exception:
-        from math import erf, sqrt
         p_value_mean = 2 * (1 - 0.5 * (1 + erf(abs(t_stat) / sqrt(2))))
 
     # Tail (p95) increase & paired bootstrap p-value
@@ -303,21 +298,21 @@ def quick_plots(loss_indep: np.ndarray, loss_clustered: np.ndarray, title_suffix
     q = np.linspace(0.01, 0.99, 99)
     emp = np.quantile(diff, q)
     try:
-        from scipy.stats import norm
         theo = norm.ppf(q, loc=mu, scale=sigma)
     except Exception:
-        from statistics import NormalDist
         nd = NormalDist(mu, sigma if sigma > 0 else 1.0)
         theo = np.array([nd.inv_cdf(float(p)) for p in q])
 
     plt.subplot(1, 2, 2)
-    plt.plot(theo, emp, "o", markersize=3)
-    lo = min(theo.min(), emp.min())
+    plt.plot(theo, emp, marker="o", linestyle="none", markersize=3,
+             label="Paired diffs (empirical)")
+    lo = min(theo.min(), emp.min());
     hi = max(theo.max(), emp.max())
-    plt.plot([lo, hi], [lo, hi], lw=1.2)  # 45°
-    plt.xlabel("Theoretical quantiles")
+    plt.plot([lo, hi], [lo, hi], lw=1.2, label="45° normal reference") # 45° line
+    plt.xlabel("Theoretical quantiles");
     plt.ylabel("Empirical quantiles")
     plt.title(f"QQ Plot of Paired Differences {title_suffix}")
+    plt.legend(loc="lower right", frameon=True, fontsize=8)
     plt.tight_layout()
     plt.show()
 
@@ -344,7 +339,7 @@ if __name__ == "__main__":
         seed_event=999, # fixes the event timing and shock-size RNG, kept separate so you don’t entangle randomness streams
     )
 
-    # Report (concise; mirrors H2 style)
+    # Report
     print("\n=== Common-Shock (H3) Experiment Report ===")
     print(f"Industry (cluster): {res['industry']}")
     print(f"Runs: {res['num_runs']:,} | p_fail: {res['p_fail']:.3f} | p_event: {res['p_event']:.2f} "
