@@ -9,6 +9,17 @@ from pathlib import Path
 
 
 def visualize(G):
+    """
+    This function is used to visualize the Tesla supplier network graph in 3 layer layout.
+    Suppliers -> Industries -> Tesla
+    The visualization includes:
+        • Node positions arranged vertically for each layer
+        • Directed edges with arrows
+        • Edge labels showing weights
+        • A legend describing each layer
+    :param G: NetworkX graph
+    :return: None
+    """
     plt.figure(figsize=(12, 10))
     color_suppliers = '#87CEFA'
     color_industries = '#90EE90'

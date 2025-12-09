@@ -15,6 +15,27 @@ from pathlib import Path
 
 # Parse year from strings like "Q1 2024"
 def parse_year_q(s):
+    """
+    This function will parse the year, quarter from the input string. It extracts 4 digit year lookinf like 20xx
+    and quarter [Q1,Q2,Q3,Q4,q1,q2,q3,q4]. It returns the quarter, year in the iput string
+    :param s: input string
+    :return: year, quarter
+
+    >>> parse_year_q("2023 Q1")
+    (2023, 1)
+
+    >>> parse_year_q("2021 q4")
+    (2021, 4)
+
+    >>> parse_year_q("Q2 2022 Earnings")
+    (2022, 2)
+
+    >>> parse_year_q("2020")
+    (2020, nan)
+
+    >>> parse_year_q("Q3")
+    (nan, 3)
+    """
     s = str(s)
     m_y = re.search(r'(20\d{2})', s)
     yr  = int(m_y.group(1)) if m_y else np.nan

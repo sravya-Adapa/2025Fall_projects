@@ -1,17 +1,6 @@
 from helper_functions import *
 from scipy import stats
 
-# CONFIGURATION
-NUM_SIMS = 10000 # number of monte carlo runs
-P_FAIL_BASE = 0.05 # baseline supplier failure probability
-TOTAL_COGS_REFERENCE = 80_240_000_000 # target COGS (USD) for the year 2024
-COGS_PER_VEHICLE_USD =  45245.32  # COGS_PER_VEHICLE production value for the year 2024
-
-MODE = "live_demo" # There is an option to change to "live_demo" , "sampled_video"
-DEMO_FRAMES = 400  # number of frames to animate in live_demo
-SAMPLE_STRIDE = 10 # animate every k-th run in sampled_video
-RUN_ANIMATION = True
-
 
 def simulation(G, cogs_map):
     """
@@ -263,23 +252,6 @@ if __name__ == "__main__":
         freq = (count / NUM_SIMS) * 100
         print(f"{ind:40} | {freq:.1f}%")
 
-    # ---------------- H1 RESULTS ----------------
+
     print_h1_results(stats_data, loss_shares, top_2_names)
-
-    # ---------------- H1 PLOTS ----------------
     plot_h1_results(stats_data, loss_shares, top_2_names)
-
-    PRECOMP = precompute_runs(G, industry_cogs, total_runs=10_000, p_fail=P_FAIL_BASE, root='Tesla', seed=1)
-
-    ANIM, FIG = animate_mc_snapshots(
-        G, industry_cogs,
-        milestones=range(500, 10001, 500),
-        pause_ms=10_000,
-        p_fail=P_FAIL_BASE,
-        cogs_per_vehicle=COGS_PER_VEHICLE_USD,
-        root_node="Tesla",
-        precomp=PRECOMP,  # <<< sync!
-        baseline_units=1_773_443,
-    )
-    plt.tight_layout()
-    plt.show()
