@@ -1,6 +1,5 @@
 from helper_functions import *
 
-
 """
 Hypothesis 2: Within a industry category, spreading volume across more suppliers (lower concentration/HHI) 
 will reduce both average loss and tail risk compared with keeping one dominant supplier at the same total 
@@ -18,9 +17,54 @@ HHI = ∑𝑖 𝑠𝑖^2.Lower HHI → diversified (e.g., equal split); higher H
 3. Defined treatment weights: perfectly uniform on same suppliers.
 """
 
+# ========== Load & verify graph ==========
 
+def load_graph_from_pickle(path: str) -> nx.Graph:
+    """Load a NetworkX graph from a pickle file."""
+    with open(path, "rb") as f:
+        return pickle.load(f)
+
+def assert_directed(G: nx.Graph) -> nx.DiGraph:
+    """
+    Ensure the graph is directed. This is a guard only; it does not convert.
+    Raises TypeError if the graph is not directed.
+    """
+    if not nx.is_directed(G):
+        raise TypeError("Graph is not directed; expected nx.DiGraph.")
+    return G  # type: ignore[return-value]
+
+def ensure_digraph(obj) -> nx.DiGraph:
+    """
+    Accepts either a graph object or a file path; loads if needed and asserts directedness.
+    """
+    G = load_graph_from_pickle(obj) if isinstance(obj, str) else obj
+    return assert_directed(G)
 
 # ========== Edge-Weight utilities ==========
+
+def _w01(x: float) -> float:
+    """Coerce an edge weight into [0,1] even if stored as a percent (e.g., 23.5 -> 0.235)."""
+    return x / 100.0 if x > 1.0 else x
+
+def get_industry_suppliers_and_shares(G: nx.DiGraph, industry: str) -> Dict[str, float]:
+    """
+    Return supplier share vector feeding *into* an industry (DIRECTED):
+      shares = {supplier: share_in_[0,1]}, normalized to sum to 1.
+    Uses G.in_edges(industry, data=True) so direction matters.
+    """
+    assert_directed(G)
+    pairs = []
+    for sup, _, d in G.in_edges(industry, data=True):   # suppliers → industry
+        w = _w01(float(d.get("weight", 0.0)))
+        if w > 0.0:
+            pairs.append((sup, w))
+    if not pairs:
+        return {}
+    total = sum(w for _, w in pairs)
+    if total <= 0.0:
+        return {}
+    # Normalize so representation (percent vs fraction) and drift don’t affect logic
+    return {sup: w / total for sup, w in pairs}
 
 def hhi(shares01: Dict[str, float]) -> float:
     """Herfindahl–Hirschman Index on fractional shares; HHI = ∑ s_i^2."""
@@ -348,7 +392,7 @@ if __name__ == "__main__":
 
 
     # Load & verify directedness
-    G = load_graph_from_pickle(graph_path)
+    G = ensure_digraph(graph_path)
 
     # Load cogs per industry
     industry_cogs = load_cogs_per_industry()

@@ -2,7 +2,6 @@ from typing import Dict,Tuple,List,Optional,Any
 import math
 from helper_functions import *
 
-
 """
 Hypothesis 3: When several suppliers fail together due to a common event (same region or shared sub-tier), 
 the simulated production loss will be much higher than under independent failures, with p95 loss rising sharply.
@@ -21,6 +20,18 @@ Goals achieved in below functions:
 2. Keeps the object intact (no mutation/conversion), so downstream code can rely on directionality safely.
 """
 
+def load_graph_from_pickle(path: str) -> nx.Graph:
+    with open(path, "rb") as f:
+        return pickle.load(f)
+
+def ensure_digraph(obj: Any) -> nx.DiGraph:
+    """Accept a graph or a path; load if needed and assert directedness."""
+
+    G = load_graph_from_pickle(obj) if isinstance(obj, str) else obj
+    if not nx.is_directed(G):
+        raise TypeError("Graph is not directed; expected nx.DiGraph.")
+    return G  # type: ignore[return-value]
+
 
 """
 Goals achieved in below functions:
@@ -28,6 +39,29 @@ Goals achieved in below functions:
 
 2. Encodes the layer-2 to layer-1 direction explicitly, so all later math uses the right flow.
 """
+
+def _w01(x: float) -> float:
+    """Coerce stored weights to [0,1] even if your file stores percent (e.g., 23.5 -> 0.235)."""
+    return x / 100.0 if x > 1.0 else x
+
+def get_industry_suppliers_and_shares(G: nx.DiGraph, industry: str) -> Dict[str, float]:
+    """
+    Return {supplier: share_in_[0,1]} for incoming edges to an industry.
+    Uses direction: suppliers → industry.
+    """
+    if not nx.is_directed(G):
+        raise TypeError("Expected directed graph in get_industry_suppliers_and_shares.")
+    pairs: List[Tuple[str, float]] = []
+    for sup, _, d in G.in_edges(industry, data=True):
+        w = _w01(float(d.get("weight", 0.0)))
+        if w > 0.0:
+            pairs.append((sup, w))
+    if not pairs:
+        return {}
+    tot = sum(w for _, w in pairs)
+    if tot <= 0:
+        return {}
+    return {sup: w / tot for sup, w in pairs}
 
 """
 Goals achieved in below functions:
@@ -326,7 +360,7 @@ if __name__ == "__main__":
     graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024.pkl")
 
     # Load directed graph + COGS
-    G = load_graph_from_pickle(graph_path)
+    G = ensure_digraph(graph_path)
     industry_cogs = load_cogs_per_industry()
 
     # Run H3 on the chosen cluster industry
