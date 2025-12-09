@@ -15,7 +15,7 @@
 
 ## Table of Contents
 
-- [Overview](#-overview)
+- [Overview](#overview)
 - [Objective](#-objective)
 - [Data Preparation](#-data-preparation)
 - [Repository Structure](#-repository-structure)
