@@ -21,12 +21,12 @@
 - [Repository Structure](#-repository-structure)
 - [Supply Chain Network Graph](#-supply-chain-network-graph)
 - [Monte Carlo Simulation Model](#-monte-carlo-simulation-model)
-- [Hypothesis 1](#-setup-instructions)
-- [Hypothesis 2](#-our-mvp-project-ui-demo)
-- [Hypothesis 3](#-product-strengths-&-current-limitations)
-- [Limitations](#-suggested-technologies)
-- [Dependencies](#-crew-&-credits)
-- [Data Sources & References](#-data-sources-$-references)
+- [Hypothesis 1](#-hypothesis-1)
+- [Hypothesis 2](#-hypothesis-2)
+- [Hypothesis 3](#-hypothesis-3)
+- [Limitations](#-limitations)
+- [Dependencies](#-dependencies)
+- [Data Sources and References](#-data-sources-and-references)
   
 ---
 
