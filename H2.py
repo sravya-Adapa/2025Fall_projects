@@ -300,7 +300,6 @@ def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str =
     """
     Simple overlay histogram and QQ-plot of paired differences for a quick visual check.
     """
-    import matplotlib.pyplot as plt
 
     # 1) histogram overlay
     plt.figure(figsize=(11,4))
@@ -327,12 +326,16 @@ def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str =
         nd = NormalDist(mu, sigma if sigma>0 else 1.0)
         theo = np.array([nd.inv_cdf(float(p)) for p in q])
 
-    plt.subplot(1,2,2)
-    plt.plot(theo, emp, marker="o", linestyle="none", markersize=3)
-    lo = min(theo.min(), emp.min()); hi = max(theo.max(), emp.max())
-    plt.plot([lo, hi], [lo, hi], lw=1.2)  # 45° line
-    plt.xlabel("Theoretical quantiles"); plt.ylabel("Empirical quantiles")
+    plt.subplot(1, 2, 2)
+    plt.plot(theo, emp, marker="o", linestyle="none", markersize=3,
+             label="Paired diffs (empirical)")
+    lo = min(theo.min(), emp.min());
+    hi = max(theo.max(), emp.max())
+    plt.plot([lo, hi], [lo, hi], lw=1.2, label="45° normal reference") # 45° line
+    plt.xlabel("Theoretical quantiles");
+    plt.ylabel("Empirical quantiles")
     plt.title(f"QQ Plot of Paired Differences {title_suffix}")
+    plt.legend(loc="lower right", frameon=True, fontsize=8)
     plt.tight_layout()
     plt.show()
 
@@ -365,7 +368,7 @@ if __name__ == "__main__":
         )
 
 
-        print("\n=== HHI Experiment Report ===")
+        print("\n=== H2 Experiment Report ===")
         print(f"Industry: {res['target_industry']}")
         print(f"HHI (baseline):  {res['base_hhi']:.4f}")
         print(f"HHI (treatment): {res['treat_hhi']:.4f}")
@@ -385,7 +388,7 @@ if __name__ == "__main__":
         quick_plots(
             res["control_loss"],
             res["treatment_loss"],
-            title_suffix=f"(HHI test)"
+            title_suffix=f"(H2 test)"
         )
 
         # for table at the end, summary row
