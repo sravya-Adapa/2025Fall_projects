@@ -390,7 +390,7 @@ def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str =
 if __name__ == "__main__":
     # Adjust path to your directed graph
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024_directed.pkl")
+    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024.pkl")
 
 
     # Load & verify directedness
