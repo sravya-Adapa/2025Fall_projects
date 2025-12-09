@@ -80,6 +80,7 @@ The model consists of a **two-layer network**, industry categories (batteries, e
 ---
 
 ## Repository Structure
+```
 ├── Tesla_specific_data/
 │   ├── preprocessed_data/
 │   │   └── component_weights_2024_percent.csv     # BEA shares scaled to 2024 COGS
@@ -98,6 +99,7 @@ The model consists of a **two-layer network**, industry categories (batteries, e
 ├── H3.py                                          # Common-shock/clustered-failure experiment
 ├── Live_demo.py                                   # Interactive animation of MC runs
 └── README.md
+```
 
 - **Tesla_specific_data/**: houses all input data. The key output of preparation is
 **preprocessed_data/component_weights_2024_percent.csv**, which normalizes **BEA 2024 $1 weights** to **Tesla’s 2024 COGS**, providing per-category dollar allocations used throughout the model.
