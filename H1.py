@@ -148,7 +148,7 @@ def print_h1_results(stats_data, loss_shares, top_2_names):
     print(f"  - Combined: {combined_share:.1f}%")
 
     # T-test
-    t_stat, p_value = stats.ttest_1samp(loss_shares, popmean=0.5, alternative='greater')
+    t_stat, p_value = st.ttest_1samp(loss_shares, popmean=0.5, alternative='greater')
 
     print("\nT-Test:")
     print(f"  T-Statistic: {t_stat:.4f}")
