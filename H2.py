@@ -234,7 +234,7 @@ Goals achieved in below functions:
 3. Reports HHI for both arms, mean loss reduction with CI + p-value, tail reduction + p-value, and a final verdict.
 """
 
-def run_hhi_experiment(
+def run_h2_experiment(
     G: nx.DiGraph,
     cogs_map: Dict[str, float],
     target_industry: str = "Computer and electronic products",
@@ -406,7 +406,7 @@ if __name__ == "__main__":
     rows = []
 
     for ind in industries:
-        res = run_hhi_experiment(
+        res = run_h2_experiment(
             G, industry_cogs,
             target_industry=ind,
             num_runs=NUM_SIMS,
