@@ -60,10 +60,22 @@ A **NetworkX-based visualization** will illustrate the firm’s supplier network
 ---
 
 ## Overview
+This project simulates how disruptions in a **giant electric vehicle manufacturing firm like Tesla**, in their supplier network, affect its ability to **produce vehicles and control production cost**.
+
+An EV manufacturer depends on key component industries like **battery systems, power electronics, motors/drive units, body/metals, interior/trim, plastics/rubber, and electronics**. When supply shocks occur due to factory outages, quality recalls, logistics delays, or regional events, inputs from critical suppliers can drop suddenly. These disruptions constrain component availability at the plant and reduce finished-vehicle.
+
+The model consists of a **two-layer network**, industry categories (batteries, electronics, metals, etc.) feeding the EV product, and named suppliers feeding each category. Category weights are derived from **BEA Input–Output (direct requirements)** as a public proxy for the bill of materials, and supplier names are mapped from public sources with clearly stated allocation assumptions. A **10,000 run Monte Carlo** injects random supplier failures to estimate **expected shortfall** in production cost and the number of units produced in 2024. Results are visualized with **NetworkX** and summarized using **95% confidence intervals, paired t-tests**, and **paired bootstrap p-values**.
 
 ---
 
 ## Objective
+- Build a two-layer EV supply chain model using BEA category weights and named suppliers.
+- Run Monte Carlo simulations for 10k runs to estimate production shortfall from supplier disruptions.
+- Test hypothesis to answer questions:
+    - Whether the top two categories contribute most towards the production loss?
+    - Does spreading volume across more suppliers within an industry category reduce the production loss?
+    - Do common-shock supplier failures create larger expected production loss than independent failures?
+- Report clear evidence via summary tables and visual plots (network view, convergence, histograms, QQ plots) with statistical tests.
 
 ---
 
@@ -111,7 +123,7 @@ To run the simulation, install the following dependencies:
 
 ---
 
-## Data Sources & References
+## Data Sources and References
 
 - **Alsettevs public article (For list of suppliers)** –  
   [https://alsettevs.com/who-are-the-suppliers-of-tesla-parts/](https://alsettevs.com/who-are-the-suppliers-of-tesla-parts/)
