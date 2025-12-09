@@ -5,7 +5,7 @@ from scipy import stats
 def simulation(G, cogs_map):
     """
     This is the Simulation model.
-    Step 1: Randomply select suppliers to fail and determine severity of failure
+    Step 1: Randomly select suppliers to fail and determine severity of failure
     Step 2: Run the simulation for 10000 times and collect the results[for each run identify the loss caused by failure nodes]
     Step 3: Identify the bottleneck industries for each run
     :param: G: networkx graph
