@@ -183,6 +183,53 @@ This structure makes the interpretation of shocks unambiguous, a supplier failur
 ---
 
 ## Monte Carlo Simulation Model
+In this monte carlo simulation model, estimate how random supplier disruptions propagate to industry category availability and **total COGS** (and thus impact vehicle units). The model runs **10,000** independent trials and summarizes both average and tail outcomes.
+
+### Model Setup
+- **Nodes & edges**. A directed, two-layer graph: **Suppliers → Industries → Tesla**. Edges carry shares (in [0,1], percent inputs are coerced).
+- **Category dollar base**. Each industry has an original **COGS allocation (USD)** for the analysis year (2024), derived from BEA category weights aligned to Tesla COGS.
+- **Key parameters**
+    - **Number of runs**: `NUM_SIMS` = 10,000
+    - **Supplier failure probability per run**: `P_FAIL_BASE` = 0.05
+    - **Failure severity (if failed)**: Uniform [0.30, 1.00] fraction of the supplier’s share
+    - **COGS per vehicle**: `COGS_PER_VEHICLE_USD` = $45,245.32
+    - **Baseline total COGS (2024)**: `TOTAL_COGS_REFERENCE` = $80.24B
+
+### Random shock process (per run)
+- **Draw failures**. For each supplier, sample a Bernoulli(p_fail).
+- **Assign severity**. For failed suppliers only, **sample a severity** so that it fails partially, not completely, every time, `s ∈ [0.30,1.00]`, non-failed suppliers have `s = 0`.
+
+### Availability and COGS propagation
+For each **industry**:
+- Start with full availability `avail = 1.0`.
+- For each incoming supplier edge with share `w`, reduce availability by `w × s` from that supplier’s draw.
+- Clamp: `avail = max(0, avail)`.
+- Translate to dollars: value_left = industry_COGS_USD × avail.
+
+**Total simulated COGS** for the run is the sum of `value_left` over all industries.
+**Implied vehicle units** = `Total simulated COGS / COGS_per_vehicle`.
+**Bottleneck industry** for that run is the industry with the **minimum availability**.
+
+### Outputs & metrics
+- **Per-run series**: total COGS, implied units, and bottleneck label.
+- **Aggregates**: mean COGS, **average shortfall** vs. baseline, **p95 loss**, and the **frequency** each industry appears as the bottleneck.
+- **Units impact** is reported as a percentage drop relative to a 2024 baseline units figure.
+
+### Live demonstration (animation)
+The live demo replays milestones across the 10,000 runs:
+- **Top panel (network view)**:
+    - **Highlights failed supplier → industry** edges in red with a severity label (e.g., “62%”).
+    - Shows a summary box with **Run, Total COGS, No. of units, Impact on units**, and the **current bottleneck** industry.
+- **Bottom panel (convergence)**:
+  - Plots the **running average shortfall** (in $ billions) across runs.
+  - An orange marker indicates the current milestone.
+
+The simulation is linear in the number of edges per run (efficient), separates **stochastic shocks** from **deterministic propagation**, and produces interpretable metrics connecting supply failures to production-scale outcomes. The convergence plot provides a simple sanity check that 10,000 runs are sufficient for stable estimates.
+
+### Figure: Live demo snapshot of the supply chain network and convergence curve.
+<center>
+  <img width="1395" height="730" alt="mc_model_image" src="https://github.com/user-attachments/assets/affb81dd-b8e5-43b3-b85b-ba480b32b0d2" />
+</center>
 
 ---
 
