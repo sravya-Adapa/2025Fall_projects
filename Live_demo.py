@@ -4,18 +4,25 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
 import numpy as np
 
-MODE = "live_demo" # There is an option to change to "live_demo" , "sampled_video"
-DEMO_FRAMES = 400  # number of frames to animate in live_demo
-SAMPLE_STRIDE = 50 # animate every k-th run in sampled_video
-RUN_ANIMATION = True
-
 def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
+    """
+
+    :param G:
+    :param cogs_map:
+    :param total_runs:
+    :param p_fail:
+    :param root:
+    :param seed:
+    :return:
+    """
+
     suppliers = [n for n, d in G.in_degree() if d == 0]
     industries = [n for n in G.predecessors(root)]
     sup_idx = {s:i for i, s in enumerate(suppliers)}
     rng = np.random.default_rng(seed)
 
     n_sup = len(suppliers)
+
     # per-run per-supplier severity (0 means no failure)
     damage = np.zeros((total_runs, n_sup), dtype=np.float32)
     fails = rng.random((total_runs, n_sup)) < p_fail
@@ -60,6 +67,20 @@ def animate_mc_snapshots(
     precomp=None,               # (suppliers, industries, damage, all_cogs, bneck_idx)
     baseline_units=1_773_443,
 ):
+    """
+
+    :param G:
+    :param cogs_map:
+    :param milestones:
+    :param pause_ms:
+    :param p_fail:
+    :param cogs_per_vehicle:
+    :param root_node:
+    :param precomp:
+    :param baseline_units:
+    :return:
+    """
+
     # --- precompute (or reuse) ---
     if precomp is None:
         suppliers, industries, damage, all_cogs, bneck_idx = precompute_runs(
@@ -72,7 +93,8 @@ def animate_mc_snapshots(
     shortfall = TOTAL_COGS_REFERENCE - all_cogs
     run_avg_shortfall = np.cumsum(shortfall) / np.arange(1, len(all_cogs)+1)
 
-    # --- layout like your network_graph.py ---
+    # --- Layout of the graph similar to initial proposed network graph ---
+
     pos = {}
     for i, s in enumerate(suppliers):
         y = (i + 0.5) * (len(industries) / max(len(suppliers), 1))
@@ -81,24 +103,25 @@ def animate_mc_snapshots(
         pos[ind] = (1.0, i + 0.5)
     pos[root_node] = (2.0, len(industries) / 2.0)
 
-    # --- figure ---
+
+    # --- Figure ---
     fig, (ax_net, ax_conv) = plt.subplots(2, 1, figsize=(16, 10),
                                           gridspec_kw={"height_ratios": [3, 1]})
     ax_net.set_title("Tesla Supply Chain Network", fontsize=18)
 
-    # nodes & labels (bold, as you asked earlier)
+    # nodes & labels
     ax_net.scatter([pos[s][0] for s in suppliers], [pos[s][1] for s in suppliers], s=60,  c="#87CEFA")
     ax_net.scatter([pos[i][0] for i in industries], [pos[i][1] for i in industries], s=900, c="#90EE90")
     ax_net.scatter([pos[root_node][0]], [pos[root_node][1]], s=2000, c="#FFD700")
     for n in suppliers + industries + [root_node]:
         ax_net.text(pos[n][0], pos[n][1], str(n), fontsize=8, fontweight='bold', ha="center", va="center")
 
-    # static industry->Tesla edges
+    # static industry to Tesla root node edges design
     for ind in industries:
         ax_net.plot([pos[ind][0], pos[root_node][0]], [pos[ind][1], pos[root_node][1]],
                     color="lightgray", lw=1.0, zorder=1)
 
-    # supplier->industry edges (we recolor with the synced run data)
+    # supplier to industry edges (need to recolor with the synced run data)
     edge_lines = {}
     for ind in industries:
         for sup, _, _ in G.in_edges(ind, data=True):
@@ -123,7 +146,7 @@ def animate_mc_snapshots(
     )
     severity_texts = []
 
-    # --- bottom convergence (full curve + status box) ---
+    # --- Bottom convergence (full curve + status box) layout ---
     ax_conv.set_title("Monte Carlo Convergence (Running Average Shortfall)", fontsize=14)
     ax_conv.set_xlabel("Number of Simulations")
     ax_conv.set_ylabel("Average Shortfall ($ Billions)")
@@ -142,7 +165,7 @@ def animate_mc_snapshots(
                             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.9),
                             fontsize=10)
 
-    # helper: nice percent without “-0%”
+    # helper function to avoid “-0%” condition
     def fmt_0pct(x, eps=5e-6):
         return f"{(0.0 if abs(x) < eps else x):.0%}"
 
@@ -163,7 +186,7 @@ def animate_mc_snapshots(
         curr_avg_shortfall = run_avg_shortfall[idx] / 1e9  # billions
         curr_bneck = industries[int(bneck_idx[idx])]
 
-        # top: recolor supplier->industry edges from the SAME run
+        # top: recolor supplier to industry edges from the SAME run and it is marked as red.
         row = damage[idx]
         for ln in edge_lines.values():
             ln.set_color("gray"); ln.set_linewidth(0.8); ln.set_alpha(0.7)
@@ -185,7 +208,7 @@ def animate_mc_snapshots(
                                     ha="center", va="bottom")
                     )
 
-        # summary box (numbers from the SAME run)
+        # summary box layout for each run
         tot   = float(all_cogs[idx])
         units = (tot / cogs_per_vehicle) if cogs_per_vehicle > 0 else 0.0
         impact = (baseline_units - units) / baseline_units
