@@ -254,14 +254,15 @@ The simulation is linear in the number of edges per run (efficient), separates *
 - **Decision rule**: if **t is large positive** and **p < 0.05**, conclude that the Top-2 industries dominate losses, otherwise, **do not support** H1.
 
 **Interpretation** 
-• **t-statistic** measures how far the observed mean is above 0.50 in standard-error units.
-• **p-value** is the probability of seeing a mean this large (or larger) if the true mean were 0.50.
-• A **large negative t** or **p ≈ 1** indicates the Top-2 share is **well below 50% (hypothesis not supported)**.
+- **t-statistic** measures how far the observed mean is above 0.50 in standard-error units.
+- **p-value** is the probability of seeing a mean this large (or larger) if the true mean were 0.50.
+- A **large negative t** or **p ≈ 1** indicates the Top-2 share is **well below 50% (hypothesis not supported)**.
 
 ### Figure showcasing the actual printed test results
 <center>
   <img width="842" height="524" alt="H1 results" src="https://github.com/user-attachments/assets/6dbd1e21-ca9f-48b1-b541-6b141f6fc490" />
 </center>
+
 
 The combined **Top-2 share was ~35% (< 50%)** with a strongly negative **t and p ≈ 1.0**, so **H1 is not supported losses are not dominated by just two industries under the independent-failure model**.
 
