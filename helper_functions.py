@@ -1,4 +1,5 @@
 # Import libraries needed for all the hypothesis testing
+
 import pandas as pd
 import networkx as nx
 import numpy as np
@@ -8,10 +9,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 from typing import Dict,Tuple,List,Optional
 import math
-import matplotlib
-matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-
 
 
 # CONFIGURATION
