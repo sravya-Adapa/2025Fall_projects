@@ -26,7 +26,7 @@
 - [Hypothesis 3](#hypothesis-3)
 - [Limitations](#limitations)
 - [Dependencies](#dependencies)
-- [Data Sources & References](#data-sources-&-references)
+- [Data Sources and References](#data-sources-and-references)
   
 ---
 
