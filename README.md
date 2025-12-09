@@ -1,12 +1,34 @@
 # Monte Carlo Simulation of Supplier Disruptions and Their Impact on an EV Manufacturer’s Production
 
+---
+
 ## Team Members
 - **Dhyey Kasundra**  
 - **Sravya Adapa**
+  
+---
 
 ## Project Type
 **Type II – Original Monte Carlo Simulation**
 
+---
+
+## Table of Contents
+
+- [Overview](#-overview)
+- [Objective](#-objective)
+- [Data Preparation](#-data-preparation)
+- [Repository Structure](#-repository-structure)
+- [Supply Chain Network Graph](#-supply-chain-network-graph)
+- [Monte Carlo Simulation Model](#-monte-carlo-simulation-model)
+- [Hypothesis 1](#-setup-instructions)
+- [Hypothesis 2](#-our-mvp-project-ui-demo)
+- [Hypothesis 3](#-product-strengths-&-current-limitations)
+- [Limitations](#-suggested-technologies)
+- [Dependencies](#-crew-&-credits)
+- [Data Sources & References](#-data-sources-$-references)
+  
+---
 
 ## Project Description
 This project simulates how disruptions in a **giant electric vehicle manufacturing firm like Tesla**, in their supplier network affect it’s ability to **produce vehicles and control production cost**.
@@ -35,10 +57,59 @@ A **NetworkX-based visualization** will illustrate the firm’s supplier network
 
 **H3:** When **several suppliers fail together** due to a common event (same region or shared sub-tier), the simulated production loss will be **much higher** than under independent failures, with p95 loss rising sharply.
 
+---
 
-## GitHub Repository
-[https://github.com/sravya-Adapa/2025Spring_projects](https://github.com/sravya-Adapa/2025Spring_projects)
+## Overview
 
+---
+
+## Objective
+
+---
+
+## Data Preparation
+
+---
+
+## Repository Structure
+
+---
+
+## Supply Chain Network Graph
+
+---
+
+## Monte Carlo Simulation Model
+
+---
+
+## Hypothesis 1
+
+---
+
+## Hypothesis 2
+
+---
+
+## Hypothesis 3
+
+---
+
+## Limitations
+
+---
+
+## Dependencies
+
+To run the simulation, install the following dependencies:
+
+- Python 3.8+
+- NumPy
+- Pandas
+- Matplotlib / Seaborn
+- NetworkX
+
+---
 
 ## Data Sources & References
 
@@ -66,12 +137,3 @@ A **NetworkX-based visualization** will illustrate the firm’s supplier network
   [https://www.sciencedirect.com/science/article/pii/S136655452500331X](https://www.sciencedirect.com/science/article/pii/S136655452500331X)
 
 
-## Requirements
-
-To run the simulation, install the following dependencies:
-
-- Python 3.8+
-- NumPy
-- Pandas
-- Matplotlib / Seaborn
-- NetworkX
