@@ -85,7 +85,33 @@ The data preparation (`data_preprocessing.py`) part transforms the actual data i
 ### Inputs
 - **BEA Input–Output (`BEA_industry_to_commodity_updated_data.csv`)**: used to derive component-category weights per $1 of motor-vehicle output.
 - **Public supplier mentions (`Supplier_to_BEA_commodity_mapping.csv`)**: used to label named suppliers and map suppliers to specific industry categories.
-- **Firm filings for COGS (`Tesla_Cost_of_Goods_Sold_2011-2025_TSLA`) and units (`number_of_units`)**: used to scale category weights into USD and to compute implied units in simulation.
+- **Firm filings for COGS (`Tesla_Cost_of_Goods_Sold_2011-2025_TSLA.csv`) and units (`number_of_units.csv`)**: used to scale category weights into USD and to compute implied units in simulation.
+
+### Data Cleaning
+- **Normalize category labels** to a fixed set of nine BEA industry categories (title-cased, trimmed, deduplicated).
+- **Standardize supplier names** (strip punctuation/whitespace, unify obvious aliases).
+- **Percent/fraction alignment**: all edge weights coerced into [0,1], any inputs stored in percent are divided by 100.
+- **Missing/zero guards**: categories or suppliers with missing weights are dropped or set to zero and excluded from normalization.
+
+### Category Weights (Layer 1)
+- From BEA direct requirements, compute each category’s **share of COGS** for the EV production in year 2024 since the BEA data is only available for that year.
+- **Scaling to dollars**, multiply shares by **COGS for the year of 2024** to obtain `cogs_allocated_usd` per category.
+
+**Output file**:
+`Tesla_specific_data/preprocessed_data/component_weights_2024_percent.csv`
+
+**Columns include**:
+- `component_industry_description`
+- `weight_share_percent (category share × 100)`
+- `cogs_allocated_usd (scaled by COGS)`
+
+### Supplier Mapping (Layer 2)
+- Map each **named supplier to exactly one industry category** (many suppliers per category are allowed).
+- Within each category, assign **within-category splits** across suppliers that **sum to the category weight**. Here second layer true shares are unknown, so **randomized allocations** are used for exploration with a **fixed RNG seed** for **reproducibility**.
+
+Input file:
+`Tesla_specific_data/Supplier_to_BEA_commodity_mapping.csv`
+(Each row: `Supplier`, `BEA Commodity Row`.)
 
 ---
 
