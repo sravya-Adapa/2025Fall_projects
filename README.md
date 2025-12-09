@@ -92,6 +92,7 @@ The data preparation (`data_preprocessing.py`) part transforms the actual data i
 - **Standardize supplier names** (strip punctuation/whitespace, unify obvious aliases).
 - **Percent/fraction alignment**: all edge weights coerced into [0,1], any inputs stored in percent are divided by 100.
 - **Missing/zero guards**: categories or suppliers with missing weights are dropped or set to zero and excluded from normalization.
+- **Temporal alignment & normalization**: BEA data only available **for 2024** and expressed **per $1 of output**. A COGS series is available for **2011–2025**, the **2024** COGS is selected to align with BEA. BEA category weights are **normalized to sum to 1.0 (2024)** and then **scaled by 2024 total COGS** to compute `cogs_allocated_usd` per category.
 
 ### Category Weights (Layer 1)
 - From BEA direct requirements, compute each category’s **share of COGS** for the EV production in year 2024 since the BEA data is only available for that year.
@@ -113,6 +114,11 @@ Input file:
 `Tesla_specific_data/Supplier_to_BEA_commodity_mapping.csv`
 (Each row: `Supplier`, `BEA Commodity Row`.)
 
+### Quality & Reproducibility Checks
+- **Totals**: Category shares sum to 100%. Supplier splits within each category sum to that category’s share.
+- **Non-negativity**: all weights ≥ 0.
+- **Determinism**: random allocations seeded to ensure **identical results across runs**.
+
 ---
 
 ## Repository Structure
@@ -120,6 +126,25 @@ Input file:
 ---
 
 ## Supply Chain Network Graph
+
+### Three-layer directed network 
+The graph layout represents Tesla’s upstream structure as a **supplier → industry → Tesla** using NetworkX.
+
+- **Layer 2 – Suppliers**: Named supplier firms (left). Each has `in-degree = 0` and edges into one or more industries.
+- **Layer 1 – Industries**: **Nine BEA industry categories** (middle) that roll up the industry share in total EV production. Each industry has one outgoing edge to Tesla.
+- **Layer 0 – Tesla**: Single sink node (right).
+
+### Edge weights (two meanings, both coerced to [0,1])
+- **Industry → Tesla**: BEA category shares of motor-vehicle COGS. Across all industries these **sum to 1.0**.
+- **Supplier → Industry**: **Within-industry splits** across suppliers. For **proof-of-concept**, shares are drawn from a **Dirichlet distribution (seeded)** so that, per industry, supplier shares **sum to 1.0** and are reproducible.
+
+### Directionality and storage 
+The canonical file `supply_chain_graph/tesla_supply_chain_graph_2024.pkl` is created for storing the directed graph as a pickle file. Nodes are tagged with a `layer` attribute, edges carry a numeric `weight` and are oriented **supplier → industry → Tesla**.
+
+This structure makes the interpretation of shocks unambiguous, a supplier failure reduces its industry’s available share, which in turn reduces Tesla’s effective COGS contribution for that category. With **validated direction and traceable weights**, the graph is a defensible basis for Monte Carlo analysis and hypothesis testing.
+
+### Figure: Tesla two-layer supplier network with category weights.
+![network graph]("https://github.com/user-attachments/assets/bf90923a-b9c6-4650-b6e4-88fa9428271e")
 
 ---
 
