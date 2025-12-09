@@ -344,7 +344,7 @@ def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str =
 if __name__ == "__main__":
     # Adjust path to your directed graph
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024_directed.pkl")
+    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024.pkl")
 
 
     # Load & verify directedness
@@ -369,7 +369,7 @@ if __name__ == "__main__":
         )
 
 
-        print("\n=== HHI Experiment Report ===")
+        print("\n=== H2 Experiment Report ===")
         print(f"Industry: {res['target_industry']}")
         print(f"HHI (baseline):  {res['base_hhi']:.4f}")
         print(f"HHI (treatment): {res['treat_hhi']:.4f}")

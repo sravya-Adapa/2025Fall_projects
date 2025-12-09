@@ -323,7 +323,7 @@ def quick_plots(loss_indep: np.ndarray, loss_clustered: np.ndarray, title_suffix
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024_directed.pkl")
+    graph_path = os.path.join(base_dir, "supply_chain_graph", "tesla_supply_chain_graph_2024.pkl")
 
     # Load directed graph + COGS
     G = load_graph_from_pickle(graph_path)
