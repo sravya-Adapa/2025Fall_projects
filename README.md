@@ -16,17 +16,17 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Objective](#-objective)
-- [Data Preparation](#-data-preparation)
-- [Repository Structure](#-repository-structure)
-- [Supply Chain Network Graph](#-supply-chain-network-graph)
-- [Monte Carlo Simulation Model](#-monte-carlo-simulation-model)
-- [Hypothesis 1](#-hypothesis-1)
-- [Hypothesis 2](#-hypothesis-2)
-- [Hypothesis 3](#-hypothesis-3)
-- [Limitations](#-limitations)
-- [Dependencies](#-dependencies)
-- [Data Sources and References](#-data-sources-and-references)
+- [Objective](#objective)
+- [Data Preparation](#data-preparation)
+- [Repository Structure](#repository-structure)
+- [Supply Chain Network Graph](#supply-chain-network-graph)
+- [Monte Carlo Simulation Model](#monte-carlo-simulation-model)
+- [Hypothesis 1](#hypothesis-1)
+- [Hypothesis 2](#hypothesis-2)
+- [Hypothesis 3](#hypothesis-3)
+- [Limitations](#limitations)
+- [Dependencies](#dependencies)
+- [Data Sources & References](#data-sources-&-references)
   
 ---
 
