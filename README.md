@@ -226,7 +226,7 @@ The live demo replays milestones across the 10,000 runs:
 
 The simulation is linear in the number of edges per run (efficient), separates **stochastic shocks** from **deterministic propagation**, and produces interpretable metrics connecting supply failures to production-scale outcomes. The convergence plot provides a simple sanity check that 10,000 runs are sufficient for stable estimates.
 
-### Figure: Live demo snapshot of the supply chain network and convergence curve.
+### Figure: Live demo snapshot of the supply chain network and convergence curve
 <center>
   <img width="1395" height="730" alt="mc_model_image" src="https://github.com/user-attachments/assets/affb81dd-b8e5-43b3-b85b-ba480b32b0d2" />
 </center>
@@ -235,9 +235,54 @@ The simulation is linear in the number of edges per run (efficient), separates *
 
 ## Hypothesis 1
 
+**H1 statement**: In Tesla’s supply network, the two industries with the largest baseline COGS weights are expected to drive **more than 50%** of total simulated loss when random supplier failures occur. If true, this would indicate **highly concentrated vulnerability**.
+
+### Experimental design
+- **Baseline by industry**. Each industry’s COGS allocation is fixed from the BEA-scaled 2024 shares.
+- **Random supplier's disruption (10,000 runs)**. In every run, supplier nodes fail independently with probability `p` and receive a random **severity in [30%, 100%]** when failed.
+- **Loss attribution**. For each run, the model computes:
+    - remaining availability per industry,
+    - **industry loss** (baseline COGS × severity passed through its suppliers), and
+    - **share of total loss** contributed by each industry.
+- **Top-2 share**. Industries are ranked by loss **within each run**, their combined share forms the **Top-2 share** for that run. The 10,000 values form the sampling distribution used for inference.
+
+### Statistical test
+- **Null (H₀)**: mean Top-2 loss share <= **0.50**.
+- **Alternative (H₁)**: mean Top-2 loss share > **0.50 (dominance)**.
+- **Estimator**: sample mean of the 10,000 Top-2 shares.
+- **Test**: one-sample **t-test** of the mean against 0.50 (one-sided, “>”).
+- **Decision rule**: if **t is large positive** and **p < 0.05**, conclude that the Top-2 industries dominate losses, otherwise, **do not support** H1.
+
+**Interpretation** 
+• **t-statistic** measures how far the observed mean is above 0.50 in standard-error units.
+• **p-value** is the probability of seeing a mean this large (or larger) if the true mean were 0.50.
+• A **large negative t** or **p ≈ 1** indicates the Top-2 share is **well below 50% (hypothesis not supported)**.
+
+### Figure showcasing the actual printed test results
+<center>
+  <img width="842" height="524" alt="H1 results" src="https://github.com/user-attachments/assets/6dbd1e21-ca9f-48b1-b541-6b141f6fc490" />
+</center>
+
+The combined **Top-2 share was ~35% (< 50%)** with a strongly negative **t and p ≈ 1.0**, so **H1 is not supported losses are not dominated by just two industries under the independent-failure model**.
+
+### Figure: Histogram of Top-2 share (10,000 runs)
+The vertical dashed line marks the **50% threshold**, the red line marks the **sample mean** Top-2 share. Mass far **left of 50%** visually signals non-dominance.
+
+<center>
+  <img width="796" height="596" alt="plot 1" src="https://github.com/user-attachments/assets/f18c1b55-7c23-4a9e-ae0d-04ef11085a22" />
+</center>
+
+### Figure: Category loss bar chart
+Bars show **average loss by industry ($ B)** across all runs, the highlighted overlay reports the **combined Top-2 share** of loss for context.
+
+<center>
+  <img width="799" height="599" alt="plot 2" src="https://github.com/user-attachments/assets/e09c040a-79e6-4635-a15c-8f165c37e041" />
+</center>
+
 ---
 
 ## Hypothesis 2
+
 
 ---
 
