@@ -17,8 +17,8 @@
 
 - [Overview](#overview)
 - [Objective](#objective)
-- [Data Preparation](#data-preparation)
 - [Repository Structure](#repository-structure)
+- [Data Preparation](#data-preparation)
 - [Supply Chain Network Graph](#supply-chain-network-graph)
 - [Monte Carlo Simulation Model](#monte-carlo-simulation-model)
 - [Hypothesis 1](#hypothesis-1)
@@ -79,6 +79,40 @@ The model consists of a **two-layer network**, industry categories (batteries, e
 
 ---
 
+## Repository Structure
+├── Tesla_specific_data/
+│   ├── preprocessed_data/
+│   │   └── component_weights_2024_percent.csv     # BEA shares scaled to 2024 COGS
+│   ├── BEA_industry_to_commodity_updated_data.csv # BEA data
+│   ├── Supplier_to_BEA_commodity_mapping.csv      # Named suppliers → BEA category map
+│   ├── Tesla_Cost_of_Goods_Sold_2011-2025_TSLA.csv
+│   ├── number_of_units.csv                        # Vehicle production counts
+│   └── ... (supporting data files)
+├── supply_chain_graph/
+│   ├── tesla_supply_chain_graph_2024.pkl          # Directed NetworkX graph (weights attached)
+├── data_preprocessing.py                          # Cleans/joins data → preprocessed_data/*.csv
+├── network_graph.py                               # Builds & saves the two-layer graph + figure
+├── helper_functions.py                            # Common loaders/utilities used by H1/H2/H3
+├── H1.py                                          # Baseline MC model + Hypothesis 1 analysis
+├── H2.py                                          # Supplier concentration (HHI) experiment
+├── H3.py                                          # Common-shock/clustered-failure experiment
+├── Live_demo.py                                   # Interactive animation of MC runs
+└── README.md
+
+- **Tesla_specific_data/**: houses all input data. The key output of preparation is
+**preprocessed_data/component_weights_2024_percent.csv**, which normalizes **BEA 2024 $1 weights** to **Tesla’s 2024 COGS**, providing per-category dollar allocations used throughout the model.
+- **supply_chain_graph/**: serialized NetworkX graph file. The graph pickle reflects the directed structure.
+- **data_preprocessing.py**: performs schema cleanup, unit normalization, joins BEA categories with supplier mappings, scales BEA shares to 2024 COGS, and writes the **preprocessed CSV** used by downstream modules.
+- **network_graph.py**: assembles a **two-layer** supply chain graph
+**(Suppliers → Industries → Tesla)** with **weighted edges**, validates directionality, and saves the pickles. Also produces the illustrative network figure embedded in the README.
+- **helper_functions.py**: shared helpers (graph loading & checks, COGS loaders, random-draw builders, convenience math) so H1/H2/H3 remain focused on experiment logic.
+- **H1.py**: implements the **core Monte Carlo simulation model** and **Hypothesis 1** tests (identifies high-weight categories that drive expected shortfalls, reports averages and risk metrics).
+- **H2.py**: runs the **HHI concentration experiment** reweights a chosen category’s supplier shares (control vs. diversified treatment), reuses common random numbers, and reports mean/tail differences with **paired t-tests** and **bootstrap p-values**.
+- **H3.py**: evaluates **clustered/common shocks** adds an event-level severity to all suppliers in a targeted industry when the event triggers, and compares loss distributions to independent failures using the same paired testing framework.
+- **Live_demo.py**: provides a **live, animated** view of the network and running-average shortfall across simulations, useful for presentations and sanity checks.
+
+---
+
 ## Data Preparation
 The data preparation (`data_preprocessing.py`) part transforms the actual data into a clean, simulation-ready representation of the EV supply chain with consistent categories, weights, and supplier mappings.
 
@@ -121,10 +155,6 @@ Input file:
 
 ---
 
-## Repository Structure
-
----
-
 ## Supply Chain Network Graph
 
 ### Three-layer directed network 
@@ -144,8 +174,9 @@ The canonical file `supply_chain_graph/tesla_supply_chain_graph_2024.pkl` is cre
 This structure makes the interpretation of shocks unambiguous, a supplier failure reduces its industry’s available share, which in turn reduces Tesla’s effective COGS contribution for that category. With **validated direction and traceable weights**, the graph is a defensible basis for Monte Carlo analysis and hypothesis testing.
 
 ### Figure: Tesla two-layer supplier network with category weights.
-<img width="581" height="497" alt="network graph" src="https://github.com/user-attachments/assets/dd240f7e-7786-4f75-bd28-233328cfaed8" />
-
+<center> 
+  <img width="581" height="497" alt="network graph" src="https://github.com/user-attachments/assets/dd240f7e-7786-4f75-bd28-233328cfaed8" />
+</center>
 
 ---
 
