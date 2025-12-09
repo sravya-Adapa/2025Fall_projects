@@ -80,6 +80,12 @@ The model consists of a **two-layer network**, industry categories (batteries, e
 ---
 
 ## Data Preparation
+The data preparation (`data_preprocessing.py`) part transforms the actual data into a clean, simulation-ready representation of the EV supply chain with consistent categories, weights, and supplier mappings.
+
+### Inputs
+- **BEA Input–Output (`BEA_industry_to_commodity_updated_data.csv`)**: used to derive component-category weights per $1 of motor-vehicle output.
+- **Public supplier mentions (`Supplier_to_BEA_commodity_mapping.csv`)**: used to label named suppliers and map suppliers to specific industry categories.
+- **Firm filings for COGS (`Tesla_Cost_of_Goods_Sold_2011-2025_TSLA`) and units (`number_of_units`)**: used to scale category weights into USD and to compute implied units in simulation.
 
 ---
 
@@ -118,7 +124,7 @@ To run the simulation, install the following dependencies:
 - Python 3.8+
 - NumPy
 - Pandas
-- Matplotlib / Seaborn
+- Matplotlib
 - NetworkX
 
 ---
