@@ -1,22 +1,45 @@
 from helper_functions import *
+from typing import Dict, Tuple
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
-def simulation(G, cogs_map):
+"""
+Hypothesis 1 proposes that within Tesla’s supply chain, the two industries with the highest baseline cost contributions are also the dominant drivers of loss when random supplier failures occur. 
+In other words, although many upstream industries feed into Tesla, the expectation is that only the top two account for more than half of the total loss across all simulated disruptions. 
+If this hypothesis is true, it would indicate a highly concentrated vulnerability in Tesla’s supply chain.
+a Monte Carlo simulation is built that runs 10,000, in each simulated scenario, random suppliers are selected to fail.
+and each supplier failure severity is also randomly assigned between 30% and 100%. 
+For each run, each industry loses part of its COGS depending on the severity and weight of its failing suppliers.
+As the simulation runs repeatedly, it calculates how much each industry contributes to total loss, how often each one becomes a bottleneck,
+how much total loss occurred, and how much of that loss came specifically from the top two industries.
+Then we test the hypothesis using one-sample t test that compares the observed mean loss share(top 2 industries) to the hypothesized threshold of 0.5
+"""
+
+
+def simulation(G: nx.DiGraph, cogs_map: dict):
     """
     This is the Simulation model.
     Step 1: Randomly select suppliers to fail and determine severity of failure
     Step 2: Run the simulation for 10000 times and collect the results[for each run identify the loss caused by failure nodes]
     Step 3: Identify the bottleneck industries for each run
-    :param: G: networkx graph
-    :return:
     """
-    # identify suppliers, industries,
     suppliers = [n for n, d in G.in_degree() if d == 0]
     root = "Tesla"
     industries = list(G.predecessors(root))
     original_industry_cogs = {ind: cogs_map[ind] for ind in industries}
 
-    # Identify Top-2 industries for hypothesis testing
+    # Top-2 industries
     top_2_industries = get_top2_industries(original_industry_cogs)
+
+    # Pre-generate all failure/severity random draws (your function)
+    draws = build_independent_draws(
+        G,
+        num_runs=NUM_SIMS,
+        p_fail=P_FAIL_BASE,
+        seed=123
+    )
 
     # BASELINE OUTPUTS
     simulated_total_cogs_results = []
@@ -30,16 +53,7 @@ def simulation(G, cogs_map):
     top2_loss_share_per_run = []
 
     # MONTE CARLO LOOP
-    for _ in range(NUM_SIMS):
-
-        supplier_damage = np.zeros(len(suppliers))
-        is_failed = np.random.rand(len(suppliers)) < P_FAIL_BASE
-        failed_indices = np.where(is_failed)[0]
-        if len(failed_indices) > 0:
-            supplier_damage[failed_indices] = np.random.uniform(
-                0.3, 1.0, size=len(failed_indices)
-            )
-        supplier_damage_map = dict(zip(suppliers, supplier_damage))
+    for r in range(NUM_SIMS):
 
         remaining_industry_percentage = {}
         total_cogs_available_this_run = 0.0
@@ -48,43 +62,59 @@ def simulation(G, cogs_map):
 
         for industry in industries:
             pct_remaining = 1.0
+
+            # LOOP over suppliers
             for supplier, _, data in G.in_edges(industry, data=True):
                 w = data.get("weight", 0)
-                dmg = supplier_damage_map.get(supplier, 0)
-                pct_remaining -= w * dmg
+
+                # YOUR random draw replacement
+                fails, sev = draws[supplier]
+                damage = sev[r]     # either 0 or severity in [0.3, 1.0]
+
+                # Reduce % availability
+                pct_remaining -= w * damage
 
             pct_remaining = max(0.0, pct_remaining)
             remaining_industry_percentage[industry] = pct_remaining
-            original_cogs = original_industry_cogs[industry]
-            simulated_cogs = original_cogs * pct_remaining
-            loss = original_cogs - simulated_cogs
-            # Baseline
+
+            # Convert to dollars
+            orig = original_industry_cogs[industry]
+            simulated_cogs = orig * pct_remaining
+            loss = orig - simulated_cogs
+
             total_cogs_available_this_run += simulated_cogs
-            # H1 metrics
+
+            # --- H1 Metrics ---
             simulated_cogs_sum[industry] += simulated_cogs
             cogs_loss_sum[industry] += loss
+
             if pct_remaining < 1:
                 severity_sum[industry] += (1 - pct_remaining)
                 failure_event_count[industry] += 1
+
             total_loss_this_run += loss
+
             if industry in top_2_industries:
                 top_2_loss_this_run += loss
+
+        # End industry loop
+
         simulated_total_cogs_results.append(total_cogs_available_this_run)
 
-        # Bottleneck
+        # Determine bottleneck
         min_pct = min(remaining_industry_percentage.values())
         if min_pct < 1:
             for ind, pct in remaining_industry_percentage.items():
                 if pct == min_pct:
                     bottleneck_counts[ind] += 1
 
-        # H1 loss-share per run
+        # Compute share of loss from top 2
         if total_loss_this_run > 0:
             top2_loss_share_per_run.append(top_2_loss_this_run / total_loss_this_run)
         else:
             top2_loss_share_per_run.append(0.0)
 
-    # Final H1 statistics table
+    # Final summary table
     stats_out = {}
     for ind in industries:
         failures = failure_event_count[ind]
@@ -106,6 +136,7 @@ def simulation(G, cogs_map):
         top2_loss_share_per_run,
         top_2_industries
     )
+
 
 
 def print_h1_results(stats_data, loss_shares, top_2_names):
@@ -148,7 +179,7 @@ def print_h1_results(stats_data, loss_shares, top_2_names):
     print(f"  - Combined: {combined_share:.1f}%")
 
     # T-test
-    t_stat, p_value = st.ttest_1samp(loss_shares, popmean=0.5, alternative='greater')
+    t_stat, p_value = stats.ttest_1samp(loss_shares, popmean=0.5, alternative='greater')
 
     print("\nT-Test:")
     print(f"  T-Statistic: {t_stat:.4f}")
@@ -204,6 +235,9 @@ def plot_h1_results(stats_data, loss_shares, top_2_names):
     total_loss = sum(d["avg_loss"] for d in stats_data.values())
     top_loss_sum = sum(stats_data[t]["avg_loss"] for t in top_2_names)
     share_pct = (top_loss_sum / total_loss) * 100
+    red_patch = mpatches.Patch(color='firebrick', label='Top 2 Industries')
+    blue_patch = mpatches.Patch(color='steelblue', label='Other Industries')
+    plt.legend(handles=[red_patch, blue_patch], loc='lower right')
 
     plt.text(
         0.5, 0.95, f"Top 2 Share: {share_pct:.1f}%",

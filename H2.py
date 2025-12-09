@@ -2,6 +2,7 @@ from helper_functions import *
 
 
 
+
 """
 Hypothesis 2: Within a industry category, spreading volume across more suppliers (lower concentration/HHI) 
 will reduce both average loss and tail risk compared with keeping one dominant supplier at the same total 
@@ -20,7 +21,15 @@ HHI = ∑𝑖 𝑠𝑖^2.Lower HHI → diversified (e.g., equal split); higher H
 # ========== Edge-Weight utilities ==========
 
 def hhi(shares01: Dict[str, float]) -> float:
-    """Herfindahl–Hirschman Index on fractional shares; HHI = ∑ s_i^2."""
+    """Herfindahl–Hirschman Index on fractional shares; HHI = ∑ s_i^2.
+
+    >>> hhi({"A": 0.25, "B": 0.25, "C": 0.25, "D": 0.25})
+    0.25
+    >>> round(hhi({"A": -0.2, "B": 0.3, "C": 0.5}), 6)
+    0.38
+    >>> hhi({})
+    0
+    """
     return sum(s * s for s in shares01.values())
 
 
@@ -29,6 +38,18 @@ def hhi(shares01: Dict[str, float]) -> float:
 def reweight_suppliers_uniform(shares01: Dict[str, float]) -> Dict[str, float]:
     """
     Treatment: keep the same supplier set, assign equal shares (min HHI for fixed set).
+    >>> reweight_suppliers_uniform({})
+    {}
+
+    >>> reweight_suppliers_uniform({"A": 0.3})
+    {'A': 1.0}
+
+    >>> reweight_suppliers_uniform({"A": 0.7, "B": 0.3})
+    {'A': 0.5, 'B': 0.5}
+
+    >>> out = reweight_suppliers_uniform({"X": 0.2, "Y": 0.5, "Z": 0.3})
+    >>> sorted((k, round(v, 6)) for k, v in out.items())
+    [('X', 0.333333), ('Y', 0.333333), ('Z', 0.333333)]
     """
     if not shares01:
         return {}
@@ -52,6 +73,21 @@ def reweight_suppliers_concentrated(
     top_frac : share for the 'dominant' supplier (e.g., 0.80)
     pick     : "largest" or a supplier name (to force a specific supplier)
     seed     : RNG seed for reproducible splits among the rest
+
+    >>> reweight_suppliers_concentrated({})
+    {}
+
+    >>> reweight_suppliers_concentrated({"A": 0.3})
+    {'A': 1.0}
+
+    >>> out = reweight_suppliers_concentrated({"A": 0.6, "B": 0.4}, top_frac=0.8, seed=1)
+    >>> round(out["A"], 6)
+    0.8
+    >>> round(out["B"], 6)
+    0.2
+    >>> out = reweight_suppliers_concentrated({"A": 0.2, "B": 0.8}, pick="A", top_frac=0.7, seed=1)
+    >>> round(out["A"], 6)
+    0.7
     """
     if not shares01:
         return {}
@@ -93,32 +129,6 @@ Goals achieved in below functions:
 2. The function "simulate_with_draws" is a tight loop that reads those severities and the shares to compute total COGS per run.
 """
 
-def build_common_draws(
-    G: nx.DiGraph,
-    num_runs: int,
-    p_fail: float,
-    seed: int = 123,
-    severity_low: float = 0.3,
-    severity_high: float = 1.0,
-) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
-    """
-    For each supplier node (in-degree==0), precompute:
-      - fail flags (bool array of length num_runs; Bernoulli(p_fail))
-      - severities (float array in [0,1], 0 if not failed; U(severity_low, severity_high) if failed)
-    Returned as: {supplier: (fail_flags, severity)}
-    """
-    rng = np.random.default_rng(seed)
-    suppliers = [n for n, d in G.in_degree() if d == 0]
-    draws = {}
-    for s in suppliers:
-        fails = rng.random(num_runs) < p_fail
-        sev = np.zeros(num_runs, dtype=np.float32)
-        # only draw severities for failures
-        if fails.any():
-            sev[fails] = rng.uniform(severity_low, severity_high, size=fails.sum()).astype(np.float32)
-        draws[s] = (fails, sev)
-    return draws
-
 def _prepare_industry_inputs(
     G: nx.DiGraph,
     cogs_map: Dict[str, float],
@@ -131,6 +141,40 @@ def _prepare_industry_inputs(
       - original COGS per industry
       - supplier share list per industry: {industry: [(supplier, share01), ...], ...}
     If overrides_for_industry is provided, it should be {industry: {supplier: share01,...}}.
+    >>> import networkx as nx
+    >>> G = nx.DiGraph()
+    >>> # Tesla has two industries feeding it
+    >>> G.add_edge("IndA", "Tesla")
+    >>> G.add_edge("IndB", "Tesla")
+    >>> # Suppliers feeding IndA
+    >>> G.add_edge("S1", "IndA", weight=0.6)
+    >>> G.add_edge("S2", "IndA", weight=0.4)
+    >>> # Suppliers feeding IndB
+    >>> G.add_edge("S3", "IndB", weight=1.0)
+    >>> cogs = {"IndA": 100.0, "IndB": 50.0}
+
+    >>> inds, orig_cogs, ind_sup = _prepare_industry_inputs(G, cogs)
+    >>> sorted(inds)
+    ['IndA', 'IndB']
+
+    >>> orig_cogs == {"IndA": 100.0, "IndB": 50.0}
+    True
+
+    # Supplier shares should reflect normalized weights
+    >>> ind_sup["IndA"]
+    [('S1', 0.6), ('S2', 0.4)]
+
+    >>> ind_sup["IndB"]
+    [('S3', 1.0)]
+
+    >>> overrides = {"IndB": {"S3": 5.0}}
+    >>> _, _, ind_sup3 = _prepare_industry_inputs(G, cogs, overrides_for_industry=overrides)
+    >>> ind_sup3["IndB"]
+    [('S3', 1.0)]
+
+    >>> _, _, ind_sup4 = _prepare_industry_inputs(G, cogs, overrides_for_industry={})
+    >>> ind_sup4["IndA"]
+    [('S1', 0.6), ('S2', 0.4)]
     """
     industries = [n for n in G.predecessors(root)]
     orig_cogs = {ind: float(cogs_map[ind]) for ind in industries}
@@ -219,7 +263,7 @@ def run_h2_experiment(
     industries_trt,  orig_cogs_trt,  ind_sup_trt  = _prepare_industry_inputs(G, cogs_map, trt_overrides)
 
     # Common random numbers
-    draws = build_common_draws(G, num_runs=num_runs, p_fail=p_fail, seed=seed)
+    draws = build_independent_draws(G, num_runs=num_runs, p_fail=p_fail, seed=seed)
 
     # Simulate
     ctrl_cogs = simulate_with_draws(industries_ctrl, orig_cogs_ctrl, ind_sup_ctrl, draws, num_runs)
@@ -247,7 +291,7 @@ def run_h2_experiment(
     t_stat = mean_diff / (sd_diff / math.sqrt(num_runs)) if sd_diff > 0 else float("inf")
 
     try:
-        p_value_mean = 2 * st.t.sf(abs(t_stat), df=num_runs - 1)
+        p_value_mean = 2 * stats.t.sf(abs(t_stat), df=num_runs - 1)
     except Exception:
         p_value_mean = 2 * (1 - 0.5 * (1 + erf(abs(t_stat) / sqrt(2))))
 

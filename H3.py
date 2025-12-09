@@ -34,36 +34,21 @@ arms for a paired test.
 2. Creates the common-event process (event flags + additive shock magnitudes) used only in the clustered arm.
 """
 
-def build_independent_draws(
-    G: nx.DiGraph,
-    num_runs: int,
-    p_fail: float,
-    seed: int = 123,
-    severity_low: float = 0.3,
-    severity_high: float = 1.0,
-) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
-    """
-    For each supplier (in-degree==0), precompute:
-      - Bernoulli failure flags (unused here but kept for parity)
-      - severity array s_i[r] in [0,1] where non-failures have 0, failures ~ U[low, high]
-    Returned as: {supplier: (fails_bool, severities_float)}
-    """
-    rng = np.random.default_rng(seed)
-    suppliers = [n for n, d in G.in_degree() if d == 0]
-    out: Dict[str, Tuple[np.ndarray, np.ndarray]] = {}
-    for s in suppliers:
-        fails = rng.random(num_runs) < p_fail
-        sev = np.zeros(num_runs, dtype=np.float32)
-        if fails.any():
-            sev[fails] = rng.uniform(severity_low, severity_high, size=fails.sum()).astype(np.float32)
-        out[s] = (fails, sev)
-    return out
-
 def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_high: float, seed: int = 999):
     """
     Common-shock process for the clustered arm:
       - event_flags[r] ~ Bernoulli(p_event)
       - shock[r] ~ U[shock_low, shock_high] when event occurs else 0
+
+    >>> flags, shock = build_common_event(num_runs=5, p_event=0.5,shock_low=0.3, shock_high=0.6,seed=0)
+    >>> len(flags)
+    5
+    >>> len(shock)
+    5
+    >>> all(shock[~flags] == 0)
+    True
+    >>> all((shock[flags] >= 0.3) & (shock[flags] <= 0.6))
+    True
     """
     rng = np.random.default_rng(seed)
     flags = rng.random(num_runs) < p_event
@@ -91,6 +76,29 @@ def _prepare_industry_inputs(
       industries: list of layer-1 industries that feed Tesla
       orig_cogs:  industry -> baseline $ value
       ind_sup:    industry -> list of (supplier, share)
+
+    >>> import networkx as nx
+    >>> G = nx.DiGraph()
+    >>> G.add_edge("S1", "I1", weight=0.4)
+    >>> G.add_edge("S2", "I1", weight=0.6)
+    >>> G.add_edge("I1", "Tesla")
+    >>> G.add_edge("S3", "I2", weight=1.0)
+    >>> G.add_edge("I2", "Tesla")
+    >>> cogs_map = {"I1": 10.0, "I2": 5.0}
+    >>> industries, orig_cogs, ind_sup = _prepare_industry_inputs(G, cogs_map, root="Tesla")
+
+
+    >>> sorted(industries)
+    ['I1', 'I2']
+
+    >>> orig_cogs == {'I1': 10.0, 'I2': 5.0}
+    True
+
+    >>> sorted(ind_sup["I1"])
+    [('S1', 0.4), ('S2', 0.6)]
+
+    >>> sorted(ind_sup["I2"])
+    [('S3', 1.0)]
     """
     industries = [n for n in G.predecessors(root)]
     orig_cogs = {ind: float(cogs_map[ind]) for ind in industries}
@@ -227,7 +235,7 @@ def run_h3_experiment(
     t_stat = mean_diff / (sd_diff / math.sqrt(num_runs)) if sd_diff > 0 else float("inf")
     # Try scipy t; fall back to normal approx
     try:
-        p_value_mean = 2 * st.t.sf(abs(t_stat), df=num_runs - 1)
+        p_value_mean = 2 * stats.t.sf(abs(t_stat), df=num_runs - 1)
     except Exception:
         p_value_mean = 2 * (1 - 0.5 * (1 + erf(abs(t_stat) / sqrt(2))))
 
