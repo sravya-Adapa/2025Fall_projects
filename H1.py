@@ -29,8 +29,8 @@ def simulation(G: nx.DiGraph, cogs_map: dict):
     Edge attribute 'weight' holds contribution shares (fraction or percent).
     :param cogs_map : dict Mapping {industry_name: baseline COGS in USD} for industries feeding Tesla.
 
-    :return: simulated_total_cogs_results : list[float] Total available COGS per run (length NUM_SIMS).
-    :return bottleneck_counts : dict[str, int] How many runs each industry was the most constrained (minimum percentage_left),
+    :return simulated_total_cogs_results : list[float] Total available COGS per run (length NUM_SIMS).
+    :return bottleneck_counts: dict[str, int] How many runs each industry was the most constrained (minimum percentage_left),
     counting only runs where a shortfall (< 100% availability) occurred.
 
     """
