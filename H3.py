@@ -40,6 +40,14 @@ def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_hi
       - event_flags[r] ~ Bernoulli(p_event)
       - shock[r] ~ U[shock_low, shock_high] when event occurs else 0
 
+    :param num_runs: Number of Monte Carlo runs.
+    :param p_event: Probability the common event occurs on a given run (0–1).
+    :param shock_low: Lower bound for the additive shock severity (inclusive).
+    :param shock_high: Upper bound for the additive shock severity (inclusive).
+    :param seed: RNG seed for reproducibility of event timing and shock sizes.
+
+    :return: Tuple (event_flags: np.ndarray[bool], event_shock: np.ndarray[float]).
+
     >>> flags, shock = build_common_event(num_runs=5, p_event=0.5,shock_low=0.3, shock_high=0.6,seed=0)
     >>> len(flags)
     5
@@ -76,6 +84,14 @@ def _prepare_industry_inputs(
       industries: list of layer-1 industries that feed Tesla
       orig_cogs:  industry -> baseline $ value
       ind_sup:    industry -> list of (supplier, share)
+
+    :param G: Directed supply-chain graph (supplier → industry → root).
+    :param cogs_map: Mapping from industry name to baseline COGS dollars.
+    :param root: Name of the root node (default "Tesla").
+
+    :return: (industries, orig_cogs, ind_sup) as described above.
+    :raises: KeyError if an industry in the graph is missing from cogs_map.
+    :notes: Supplier-edge weights may be stored as percents; they are coerced to [0,1] and renormalized.
 
     >>> import networkx as nx
     >>> G = nx.DiGraph()
@@ -125,6 +141,19 @@ def simulate_independent_vs_clustered(
       - clustered arm  (clust_out) where, on event runs, suppliers in cluster_industry get +shock (clamped at 1).
 
     NOTE: The extra shock is applied only to supplier contributions into `cluster_industry` as discussed.
+
+    :param industries: List of layer-1 industries feeding the root.
+    :param orig_cogs: Mapping industry -> baseline COGS dollars.
+    :param ind_sup: Mapping industry -> list of (supplier, share01).
+    :param draws: Mapping supplier -> (fail_flags, base_severity) arrays for all runs.
+    :param num_runs: Number of Monte Carlo runs.
+    :param cluster_industry: Industry where the event shock applies.
+    :param cluster_suppliers: Subset of suppliers (by name) feeding `cluster_industry` to receive the extra shock.
+    :param event_flags: Boolean array indicating runs when the common event occurs.
+    :param event_shock: Float array of additive shock magnitudes per run (0 when no event).
+
+    :return: (ctrl_out, clust_out), two np.ndarray of length num_runs with total COGS per run.
+    :notes: The two arms share the same `draws` (paired design) to isolate the effect of clustering.
     """
     ctrl_out  = np.zeros(num_runs, dtype=np.float64)
     clust_out = np.zeros(num_runs, dtype=np.float64)
@@ -188,6 +217,25 @@ def run_h3_experiment(
     """
     Compare independent vs clustered failures using the same independent draws (paired design).
     A common event adds an extra severity S to all suppliers feeding `cluster_industry` on that run.
+
+    :param G: Directed supply-chain graph (supplier → industry → Tesla).
+    :param cogs_map: Mapping industry -> baseline COGS dollars.
+    :param cluster_industry: Industry whose suppliers receive the common additive shock.
+    :param num_runs: Number of Monte Carlo runs.
+    :param p_fail: Independent per-supplier failure probability in both arms.
+    :param p_event: Probability the common event occurs on a run (clustered arm only).
+    :param shock_low: Lower bound of additive shock (inclusive) when the event occurs.
+    :param shock_high: Upper bound of additive shock (inclusive) when the event occurs.
+    :param seed_draws: RNG seed for independent failure/severity draws.
+    :param seed_event: RNG seed for event timing and shock magnitudes.
+
+    :return: Dict with keys such as:
+             {
+               "indep_loss", "clustered_loss",
+               "mean_diff", "t_stat", "p_value_mean",
+               "indep_p95", "clustered_p95", "p95_diff", "p_value_tail",
+               "p_event", "shock_range", "cluster_industry", "num_runs"
+             }
     """
 
     # Precompute structures & supplier cluster (the set feeding the target industry)
@@ -220,6 +268,15 @@ def run_h3_experiment(
 
     # Mean difference & CI (paired)
     def _mean_ci(x: np.ndarray, level: float = 0.95) -> Tuple[float, float, float]:
+        """
+        Compute the sample mean and a two-sided (1−α) confidence interval via
+        a normal (z) approximation.
+
+        :param x: 1D array of observations.
+        :param level: Desired confidence level in (0,1). Currently only 0.95 is supported by the fixed z constant,
+        to support other levels, replace the hard-coded z with the appropriate quantile.
+        :return: Tuple (mean, lower_bound, upper_bound).
+        """
         m = float(x.mean())
         s = float(x.std(ddof=1))
         z = 1.959963984540054  # 97.5% quantile of N(0,1)
@@ -287,7 +344,14 @@ Goals achieved in below functions:
 2. Adds a QQ plot of paired differences to sanity-check normality/shape assumptions behind the t-test.
 """
 def quick_plots(loss_indep: np.ndarray, loss_clustered: np.ndarray, title_suffix: str = ""):
-    """Overlay histograms and QQ plot of paired differences (clustered - independent)."""
+    """Overlay histograms and QQ plot of paired differences (clustered - independent).
+
+    :param loss_indep: Array of per-run losses under the independent arm.
+    :param loss_clustered: Array of per-run losses under the clustered arm.
+    :param title_suffix: Optional string appended to figure titles.
+
+    :return: None (plots to the active Matplotlib backend).
+    """
     plt.figure(figsize=(11, 4))
 
     # 1) Loss histograms
