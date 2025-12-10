@@ -24,6 +24,15 @@ def simulation(G: nx.DiGraph, cogs_map: dict):
     Step 1: Randomly select suppliers to fail and determine severity of failure
     Step 2: Run the simulation for 10000 times and collect the results[for each run identify the loss caused by failure nodes]
     Step 3: Identify the bottleneck industries for each run
+
+    :param G : nx.DiGraph Directed supply-chain graph with edges supplier→industry and industry→"Tesla".
+    Edge attribute 'weight' holds contribution shares (fraction or percent).
+    :param cogs_map : dict Mapping {industry_name: baseline COGS in USD} for industries feeding Tesla.
+
+    :return: simulated_total_cogs_results : list[float] Total available COGS per run (length NUM_SIMS).
+    :return bottleneck_counts : dict[str, int] How many runs each industry was the most constrained (minimum percentage_left),
+    counting only runs where a shortfall (< 100% availability) occurred.
+
     """
     suppliers = [n for n, d in G.in_degree() if d == 0]
     root = "Tesla"
@@ -147,9 +156,11 @@ def print_h1_results(stats_data: dict, loss_shares: list, top_2_names: list):
       3. Average severity of impact
       4. Contribution of the top-2 industries to total simulated loss
       5. One-sample t-test comparing the loss share of top-2 industries against 50%
+
     :param stats_data: dict. Summary statistics returned from the simulation().
     :param loss_shares: list of float Per-run share of total loss contribution of the top 2 industries.
     :param top_2_names: list[str]. Names of the top 2 industries by baseline COGS.
+
     :return: None
     """
 
@@ -207,9 +218,11 @@ def plot_h1_results(stats_data: dict, loss_shares: list, top_2_names: list):
     """
     To plot the H1 results. It plots a Histogram to show the % of loss contribution distribution for top 2 categories and also highlights the mean % of loss contribution
     and the test threshold which is 50%. It also plots a bar graph to show the total average loss for each industry.
+
     :param stats_data: dict. Summary statistics returned from the simulation().
     :param loss_shares: list of float Per-run share of total loss contribution of the top 2 industries.
     :param top_2_names: list[str]. Names of the top 2 industries by baseline COGS.
+
     :return: None
     """
 
