@@ -176,7 +176,6 @@ def build_independent_draws(
     G: nx.DiGraph,
     num_runs: int,
     p_fail: float,
-    seed: int = 123,
     severity_low: float = 0.3,
     severity_high: float = 1.0,
 ) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
@@ -188,7 +187,6 @@ def build_independent_draws(
     :param G : nx.DiGraph Directed supply-chain graph (supplier → industry → root). Suppliers are nodes with in-degree 0.
     :param num_runs : int Number of Monte Carlo runs to precompute for (e.g., 10_000).
     :param p_fail : float Per-run failure probability for each supplier (0–1).
-    :param seed : int, optional RNG seed for reproducibility of both failure flags and severities. Default 123.
     :param severity_low : float, optional Lower bound of the uniform severity distribution for failures (inclusive). Default 0.3.
     :param severity_high : float, optional Upper bound of the uniform severity distribution for failures (inclusive). Default 1.0.
 
@@ -202,7 +200,7 @@ def build_independent_draws(
     >>> G.add_edge("S1", "I1")
     >>> G.add_edge("S2", "I1")
     >>> num_runs = 5
-    >>> out = build_independent_draws(G, num_runs=num_runs, p_fail=0.5, seed=0)
+    >>> out = build_independent_draws(G, num_runs=num_runs, p_fail=0.5)
     >>> sorted(out.keys())
     ['S1', 'S2']
 
@@ -213,7 +211,7 @@ def build_independent_draws(
     >>> all(sev_S1[~fails_S1] == 0)
     True
     """
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng()
     suppliers = [n for n, d in G.in_degree() if d == 0]
     out: Dict[str, Tuple[np.ndarray, np.ndarray]] = {}
     for s in suppliers:

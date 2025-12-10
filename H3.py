@@ -19,7 +19,7 @@ arms for a paired test.
 2. Creates the common-event process (event flags + additive shock magnitudes) used only in the clustered arm.
 """
 
-def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_high: float, seed: int = 999):
+def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_high: float):
     """
     Common-shock process for the clustered arm:
       - event_flags[r] ~ Bernoulli(p_event)
@@ -29,8 +29,6 @@ def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_hi
     :param p_event: Probability the common event occurs on a given run (0–1).
     :param shock_low: Lower bound for the additive shock severity (inclusive).
     :param shock_high: Upper bound for the additive shock severity (inclusive).
-    :param seed: RNG seed for reproducibility of event timing and shock sizes.
-
     :return: Tuple (event_flags: np.ndarray[bool], event_shock: np.ndarray[float]).
 
     >>> flags, shock = build_common_event(num_runs=5, p_event=0.5,shock_low=0.3, shock_high=0.6)
@@ -43,7 +41,7 @@ def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_hi
     >>> all((shock[flags] >= 0.3) & (shock[flags] <= 0.6))
     True
     """
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng()
     flags = rng.random(num_runs) < p_event
     shock = np.zeros(num_runs, dtype=np.float32)
     if flags.any():
@@ -196,8 +194,6 @@ def run_h3_experiment(
     p_event: float = 0.10,          # probability the cluster event fires on a run
     shock_low: float = 0.30,        # additive shock S ~ U[low, high] when event occurs
     shock_high: float = 0.60,
-    seed_draws: int = 123,
-    seed_event: int = 999,
 ) -> Dict[str, Any]:
     """
     Compare independent vs clustered failures using the same independent draws (paired design).
@@ -211,8 +207,7 @@ def run_h3_experiment(
     :param p_event: Probability the common event occurs on a run (clustered arm only).
     :param shock_low: Lower bound of additive shock (inclusive) when the event occurs.
     :param shock_high: Upper bound of additive shock (inclusive) when the event occurs.
-    :param seed_draws: RNG seed for independent failure/severity draws.
-    :param seed_event: RNG seed for event timing and shock magnitudes.
+
 
     :return: Dict with keys such as:
              {
@@ -231,12 +226,12 @@ def run_h3_experiment(
     cluster_suppliers = list(shares.keys())
 
     # Shared random draws for both arms (pairing)
-    draws = build_independent_draws(G, num_runs=num_runs, p_fail=p_fail, seed=seed_draws)
+    draws = build_independent_draws(G, num_runs=num_runs, p_fail=p_fail)
 
     # Common-shock process for the clustered arm
     event_flags, event_shock = build_common_event(
         num_runs=num_runs, p_event=p_event,
-        shock_low=shock_low, shock_high=shock_high, seed=seed_event
+        shock_low=shock_low, shock_high=shock_high
     )
 
     # Simulate both arms
@@ -392,8 +387,6 @@ if __name__ == "__main__":
         p_event=0.10, # Here 10% or 1000 runs experience a cluster-wide shock for the chosen industry
         shock_low=0.30, # when that shock happens, each supplier in the cluster gets an extra severity this is the lowest value
         shock_high=0.60, # when that shock happens, each supplier in the cluster gets an extra severity this is the highest value
-        seed_draws=123, # fixes the base (independent) failure/severity RNG for reproducibility.
-        seed_event=999, # fixes the event timing and shock-size RNG, kept separate so you don’t entangle randomness streams
     )
 
     # Report
