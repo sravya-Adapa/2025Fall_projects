@@ -6,17 +6,14 @@ import numpy as np
 
 def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
     """
-     Precompute supplier failures and resulting industry-level COGS for a group
-     of Monte Carlo runs. This function is used to avoid recomputing
-    random failures inside the animation loop.
-
-    :param G: nx.DiGraph
-    :param cogs_map: dict
-    :param total_runs: int
-    :param p_fail: float
-    :param root: str
-    :param seed: int
-    :return: ist of supplier nodes (in-degree = 0), List of Layer-1 industry nodes feeding Tesla, Per-run severity values; 0 means no failure,Total available COGS for each run,Index of bottleneck industry for each run
+    To precompute the results for a group of simulations so that the computation while animation the simulation is not required.
+    :param G:
+    :param cogs_map:
+    :param total_runs:
+    :param p_fail:
+    :param root:
+    :param seed:
+    :return:
     """
 
     suppliers = [n for n, d in G.in_degree() if d == 0]
@@ -71,7 +68,17 @@ def animate_mc_snapshots(
     baseline_units=1_773_443,
 ):
     """
-    Create an animated visualization of Monte Carlo supply-chain disruptions.
+    This function is used to animate the Monte Carlo simulation.
+    :param G:
+    :param cogs_map:
+    :param milestones:
+    :param pause_ms:
+    :param p_fail:
+    :param cogs_per_vehicle:
+    :param root_node:
+    :param precomp:
+    :param baseline_units:
+    :return:
     """
 
     # --- precompute (or reuse) ---
