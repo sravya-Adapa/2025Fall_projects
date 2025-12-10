@@ -6,14 +6,31 @@ import numpy as np
 
 def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
     """
+    Precompute Monte Carlo draws and derived per-run aggregates for the live animation.
 
-    :param G:
-    :param cogs_map:
-    :param total_runs:
-    :param p_fail:
-    :param root:
-    :param seed:
-    :return:
+    • Identifies suppliers (in-degree==0) and industries (parents of `root`) from the directed graph.
+    • For each run r ∈ {1..total_runs}, samples independent supplier failures with probability `p_fail`
+      and assigns a severity in [0,1] (0 when not failed).
+    • Propagates severities supplier→industry to compute remaining availability per industry and the
+      total simulated COGS for that run.
+    • Records a simple bottleneck index: the argmin industry by remaining availability in run r.
+
+    :param G: nx.DiGraph Directed supply-chain graph (supplier → industry → `root`). Must be directed.
+    :param cogs_map : Dict[str, float] Mapping from industry name to baseline COGS dollars.
+    :param total_runs : int Number of Monte Carlo runs to precompute (e.g., 10_000).
+    :param p_fail : float Per-supplier failure probability in each run (0–1).
+    :param root : str Name of the root node (default "Tesla"); industries are G.predecessors(root).
+    :param seed : int RNG seed to make precomputed draws reproducible.
+
+    :return: Tuple[List[str], List[str], np.ndarray, np.ndarray, np.ndarray]
+        (suppliers, industries, damage, all_cogs, bneck_idx) where:
+          • suppliers : list[str]
+          • industries: list[str]
+          • damage    : float array of shape (total_runs, len(suppliers)),
+                        per-run supplier severities in [0,1] (0 means no failure)
+          • all_cogs  : float array of shape (total_runs,), total simulated COGS dollars per run
+          • bneck_idx : int array of shape (total_runs,), index into `industries` of the most
+                        constrained industry in each run
     """
 
     suppliers = [n for n, d in G.in_degree() if d == 0]
@@ -68,17 +85,29 @@ def animate_mc_snapshots(
     baseline_units=1_773_443,
 ):
     """
+    Two-panel animation for the Monte Carlo model: network snapshot (top) + convergence marker (bottom).
 
-    :param G:
-    :param cogs_map:
-    :param milestones:
-    :param pause_ms:
-    :param p_fail:
-    :param cogs_per_vehicle:
-    :param root_node:
-    :param precomp:
-    :param baseline_units:
-    :return:
+    • Top panel: Tesla supply network laid out in 3 columns (Suppliers → Industries → Tesla).
+      Supplier→Industry edges that "fail" for the current frame are highlighted in red with a
+      severity label. A summary box shows the milestone run number, total COGS, implied units,
+      bottleneck industry, and impact-on-units.
+    • Bottom panel: Running-average shortfall curve for all runs (drawn once) with a marker that
+      advances to the current milestone (e.g., 100, 200, …, 10_000). This conveys convergence.
+
+    :param G : nx.DiGraph Directed supply-chain graph (supplier → industry → root).
+    :param cogs_map : Dict[str, float] Mapping from industry name to baseline COGS dollars.
+    :param milestones : Iterable[int], The subset of run indices to show as frames (marker positions). Defaults to 100..10_000 step 100.
+    :param pause_ms : int, optional Dwell time per frame in milliseconds (e.g., 10_000 = 10s per milestone).
+    :param p_fail : float, optional Per-supplier failure probability used only for the *visual* red edge highlights when
+    `precomp` is not driving the snapshot look. The convergence curve itself is precomputed.
+    :param cogs_per_vehicle : float, optional COGS dollars per vehicle, used to compute implied units in the summary box.
+    :param root_node : str, optional Name of the root node ("Tesla").
+    :param precomp : Optional[Tuple], optional A tuple (suppliers, industries, damage, all_cogs, bneck_idx) returned by `precompute_runs`.
+    If provided, the bottom convergence curve and summary stats use these exact precomputed values.
+    :param baseline_units : int, optional Baseline production units, used to show "impact on units" versus baseline.
+
+    :return: Tuple[matplotlib.animation.FuncAnimation, matplotlib.figure.Figure] (ani, fig) so the caller can keep a global
+    reference to prevent GC and then call plt.show().
     """
 
     # --- precompute (or reuse) ---
@@ -167,12 +196,36 @@ def animate_mc_snapshots(
 
     # helper function to avoid “-0%” condition
     def fmt_0pct(x, eps=5e-6):
+        """
+        Format a percentage while suppressing the string '-0%'. Values whose absolute magnitude is < eps are
+        treated as exactly 0.0 before formatting. This avoids artifacts from tiny negative rounding errors
+        (e.g., -0.000001 → "0%").
+
+        :param x : float Fraction to be rendered as a percentage (e.g., 0.034 → "3%").
+        :param eps : float, Tolerance below which the value is coerced to 0.0. Default 5e-6.
+
+        :return: str Percentage string with no '-0%' cases.
+        """
         return f"{(0.0 if abs(x) < eps else x):.0%}"
 
     frames = list(milestones)
     sup_idx = {s:i for i, s in enumerate(suppliers)}
 
     def _update(milestone):
+        """
+            Render a single animation frame for the given milestone run index.
+
+            Steps:
+            1) Clear previous severity labels and reset supplier→industry edge styling.
+            2) Move the convergence marker to `milestone` on the bottom plot.
+            3) Sample (or read from `precomp`) per-supplier severities for the snapshot,
+               color failing edges red and annotate with severity.
+            4) Update the summary box (total COGS, implied units, bottleneck, impact-on-units).
+
+            :param milestone: Iterable[int], The subset of run indices to show as frames (marker positions). Defaults to 100..10_000 step 100.
+
+            :return: a list of Matplotlib artists to be redrawn by FuncAnimation.
+        """
         nonlocal severity_texts
         # clear severity labels
         for t in severity_texts:

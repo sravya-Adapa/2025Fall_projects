@@ -17,6 +17,7 @@ def visualize(G):
         • Directed edges with arrows
         • Edge labels showing weights
         • A legend describing each layer
+
     :param G: NetworkX graph
     :return: None
     """

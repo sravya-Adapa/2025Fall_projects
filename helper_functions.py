@@ -30,6 +30,7 @@ COGS_PER_VEHICLE_USD =  45245.32  # COGS_PER_VEHICLE production value for the ye
 def load_graph_from_pickle(file_path: str) -> nx.Graph:
     """
     This function simply loads the saved network graph.
+
     :param file_path: path to the pickle file
     :return: networkx graph
 
@@ -56,6 +57,7 @@ def load_graph_from_pickle(file_path: str) -> nx.Graph:
 def load_cogs_per_industry()-> Dict[str, float]:
     """
     Loads the preprocessed data file and extract the dictionary of cogs value for each industry.
+
     :param: None
     :return: dictionary of industry cogs values for each industry
 
@@ -84,6 +86,7 @@ def load_cogs_per_industry()-> Dict[str, float]:
 def get_top2_industries(original_industry_cogs):
     """
     This function extracts the top 2 industries based on COGS distribution from the original industry cogs dictionary.
+
     :param original_industry_cogs: dictionary of industry cogs values
     :return: list of top 2 industries
 
@@ -104,6 +107,7 @@ def get_top2_industries(original_industry_cogs):
 
 def _w01(x: float) -> float:
     """Coerce an edge weight into [0,1] even if stored as a percent (e.g., 23.5 -> 0.235).
+
     :param x: edge weight
     :return: normalized edge weight
 
@@ -124,6 +128,7 @@ def get_industry_suppliers_and_shares(G: nx.DiGraph, industry: str) -> Dict[str,
     Return supplier share vector feeding *into* an industry (DIRECTED):
       shares = {supplier: share_in_[0,1]}, normalized to sum to 1.
     Uses G.in_edges(industry, data=True) so direction matters.
+
     :param G: networkx DiGraph
     :param industry: string
     :return: dictionary of industry shares
@@ -174,7 +179,19 @@ def build_independent_draws(
     For each supplier (in-degree==0), precompute:
       - Bernoulli failure flags (unused here but kept for clarity)
       - severity array s_i[r] in [0,1] where non-failures have 0, failures ~ U[low, high]
-    Returned as: {supplier: (fails_bool, severities_float)}
+
+    :param G : nx.DiGraph Directed supply-chain graph (supplier → industry → root). Suppliers are nodes with in-degree 0.
+    :param num_runs : int Number of Monte Carlo runs to precompute for (e.g., 10_000).
+    :param p_fail : float Per-run failure probability for each supplier (0–1).
+    :param seed : int, optional RNG seed for reproducibility of both failure flags and severities. Default 123.
+    :param severity_low : float, optional Lower bound of the uniform severity distribution for failures (inclusive). Default 0.3.
+    :param severity_high : float, optional Upper bound of the uniform severity distribution for failures (inclusive). Default 1.0.
+
+    :return: Dict[str, Tuple[np.ndarray, np.ndarray]]
+        Mapping `supplier_name -> (fails, sev)` where:
+          • `fails` has shape (num_runs,), dtype=bool
+          • `sev`   has shape (num_runs,), dtype=float (0 for non-failures; U[low, high] for failures)
+
 
     >>> G = nx.DiGraph()
     >>> G.add_edge("S1", "I1")
