@@ -39,7 +39,7 @@ def load_graph_from_pickle(file_path: str) -> nx.Graph:
     FileNotFoundError: ...
 
 
-    >>> import tempfile, pickle, networkx as nx
+    >>> import tempfile
     >>> G = nx.DiGraph()
     >>> G.add_edge("A", "B", weight=0.8)
     >>> temp = tempfile.NamedTemporaryFile(delete=False)
@@ -61,7 +61,6 @@ def load_cogs_per_industry()-> Dict[str, float]:
     :param: None
     :return: dictionary of industry cogs values for each industry
 
-    >>> import pandas as pd
     >>> import types
     >>> fake_df = pd.DataFrame({
     ...     "component_industry_description": ["A", "B"],
@@ -133,7 +132,6 @@ def get_industry_suppliers_and_shares(G: nx.DiGraph, industry: str) -> Dict[str,
     :param industry: string
     :return: dictionary of industry shares
 
-    >>> import networkx as nx
     >>> G = nx.DiGraph()
     >>> G.add_edge("S1", "I1", weight=0.2)
     >>> G.add_edge("S2", "I1", weight=0.3)
