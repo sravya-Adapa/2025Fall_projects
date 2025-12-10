@@ -47,7 +47,6 @@ def simulation(G: nx.DiGraph, cogs_map: dict):
         G,
         num_runs=NUM_SIMS,
         p_fail=P_FAIL_BASE,
-        seed=123
     )
 
     # BASELINE OUTPUTS
