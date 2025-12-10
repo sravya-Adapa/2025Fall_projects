@@ -13,6 +13,7 @@ Goals achieved in below functions:
 Here: for one industry, take each supplier’s share of that industry (fractions that sum to 1) and compute 
 HHI = ∑𝑖 𝑠𝑖^2.Lower HHI → diversified (e.g., equal split); higher HHI → concentrated (one dominant supplier).
 3. Defined treatment weights: perfectly uniform on same suppliers.
+4. Defined control weights: concentrated to 80% and other were 20% on same suppliers.
 """
 
 # ========== Edge-Weight utilities ==========
@@ -133,7 +134,7 @@ def reweight_suppliers_concentrated(
 
 """
 Goals achieved in below functions:
-1. The function "build_common_draws" makes one randomness table and uses it for both control & treatment category.
+1. Precomputes industries list, baseline COGS, and supplier-share lists to make the simulation inner loop lean.
 
 2. The function "simulate_with_draws" is a tight loop that reads those severities and the shares to compute total COGS per run.
 """

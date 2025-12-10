@@ -13,21 +13,6 @@ markedly higher than the independent-failure baseline.
 
 """
 Goals achieved in below functions:
-1. Loads the pickled NetworkX graph and asserts it’s directed, preventing accidental use of an undirected graph.
-
-2. Keeps the object intact (no mutation/conversion), so downstream code can rely on directionality safely.
-"""
-
-
-"""
-Goals achieved in below functions:
-1. Pulls supplier to industry edge weights and normalizes them to shares in [0,1] (handles percent inputs too).
-
-2. Encodes the layer-2 to layer-1 direction explicitly, so all later math uses the right flow.
-"""
-
-"""
-Goals achieved in below functions:
 1. Builds independent per-supplier severity series (fail Bernoulli, severities on failures) shared by both 
 arms for a paired test.
 

@@ -26,6 +26,10 @@ P_FAIL_BASE = 0.05 # baseline supplier failure probability
 TOTAL_COGS_REFERENCE = 80_240_000_000 # target COGS (USD) for the year 2024
 COGS_PER_VEHICLE_USD =  45245.32  # COGS_PER_VEHICLE production value for the year 2024
 
+"""
+1. Loads the pickled NetworkX graph and asserts it’s directed, preventing accidental use of an undirected graph.
+2. Keeps the object intact (no mutation/conversion), so downstream code can rely on directionality safely.
+"""
 
 def load_graph_from_pickle(file_path: str) -> nx.Graph:
     """
@@ -53,6 +57,7 @@ def load_graph_from_pickle(file_path: str) -> nx.Graph:
     with open(file_path, 'rb') as f:
         G = pickle.load(f)
     return G
+
 
 def load_cogs_per_industry()-> Dict[str, float]:
     """
@@ -164,6 +169,10 @@ def get_industry_suppliers_and_shares(G: nx.DiGraph, industry: str) -> Dict[str,
         return {}
     # Normalize so representation (percent vs fraction) and drift don’t affect logic
     return {sup: w / total for sup, w in pairs}
+
+"""
+The function "build_common_draws" makes one randomness table and uses it for both control & treatment category.
+"""
 
 def build_independent_draws(
     G: nx.DiGraph,
