@@ -71,7 +71,6 @@ def reweight_suppliers_concentrated(
     shares01: Dict[str, float],
     top_frac: float = 0.80,
     pick: str = "largest",
-    seed: int = 7,
 ) -> Dict[str, float]:
     """
     CONTROL: concentrated split inside the SAME supplier set.
@@ -80,7 +79,6 @@ def reweight_suppliers_concentrated(
     :param shares01 : dict of {supplier: share} that sum to 1 (baseline from graph)
     :param top_frac : share for the 'dominant' supplier (e.g., 0.80)
     :param pick     : "largest" or a supplier name (to force a specific supplier)
-    :param seed     : RNG seed for reproducible splits among the rest
 
     :return: Dict[str, float] New mapping with the same keys and a concentrated split that sums to 1.
 
@@ -90,12 +88,12 @@ def reweight_suppliers_concentrated(
     >>> reweight_suppliers_concentrated({"A": 0.3})
     {'A': 1.0}
 
-    >>> out = reweight_suppliers_concentrated({"A": 0.6, "B": 0.4}, top_frac=0.8, seed=1)
+    >>> out = reweight_suppliers_concentrated({"A": 0.6, "B": 0.4}, top_frac=0.8)
     >>> round(out["A"], 6)
     0.8
     >>> round(out["B"], 6)
     0.2
-    >>> out = reweight_suppliers_concentrated({"A": 0.2, "B": 0.8}, pick="A", top_frac=0.7, seed=1)
+    >>> out = reweight_suppliers_concentrated({"A": 0.2, "B": 0.8}, pick="A", top_frac=0.7)
     >>> round(out["A"], 6)
     0.7
     """
@@ -115,7 +113,7 @@ def reweight_suppliers_concentrated(
         top_supplier = pick
 
     others = [s for s in shares01.keys() if s != top_supplier]
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng()
     # Random split for the remaining (1 - top_frac) using Dirichlet
     if len(others) == 1:
         other_alloc = np.array([1.0])
@@ -269,7 +267,6 @@ def run_h2_experiment(
     target_industry: str = "Computer and electronic products",
     num_runs: int = NUM_SIMS,
     p_fail: float = P_FAIL_BASE,
-    seed: int = 123,
 ) -> Dict[str, any]:
     """
     Reweights suppliers ONLY inside target_industry; everything else unchanged.
@@ -282,7 +279,6 @@ def run_h2_experiment(
     :param target_industry : str, optional Industry whose within-category weights are modified (default shown).
     :param num_runs : int, optional Number of Monte Carlo runs (default `NUM_SIMS`).
     :param p_fail : float, optional Baseline supplier failure probability per run.
-    :param seed : int, optional Seed used for generating common random numbers.
 
     :return: Dict[str, Any]
         Dictionary containing:
@@ -299,7 +295,7 @@ def run_h2_experiment(
         raise ValueError(f"No suppliers found feeding industry: {target_industry}")
 
     # CONTROL (concentrated) and TREATMENT (uniform)
-    ctrl_shares = reweight_suppliers_concentrated(base_shares, top_frac=0.80, pick="largest", seed=seed)
+    ctrl_shares = reweight_suppliers_concentrated(base_shares, top_frac=0.80, pick="largest")
     trt_shares  = reweight_suppliers_uniform(base_shares)
 
     base_hhi  = hhi(ctrl_shares)   # report as "baseline HHI" (control arm)
@@ -313,7 +309,7 @@ def run_h2_experiment(
     industries_trt,  orig_cogs_trt,  ind_sup_trt  = _prepare_industry_inputs(G, cogs_map, trt_overrides)
 
     # Common random numbers
-    draws = build_independent_draws(G, num_runs=num_runs, p_fail=p_fail, seed=seed)
+    draws = build_independent_draws(G, num_runs=num_runs, p_fail=p_fail)
 
     # Simulate
     ctrl_cogs = simulate_with_draws(industries_ctrl, orig_cogs_ctrl, ind_sup_ctrl, draws, num_runs)
@@ -470,7 +466,6 @@ if __name__ == "__main__":
             target_industry=ind,
             num_runs=NUM_SIMS,
             p_fail=P_FAIL_BASE,
-            seed=123
         )
 
 
