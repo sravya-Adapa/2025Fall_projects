@@ -33,7 +33,7 @@ def build_common_event(num_runs: int, p_event: float, shock_low: float, shock_hi
 
     :return: Tuple (event_flags: np.ndarray[bool], event_shock: np.ndarray[float]).
 
-    >>> flags, shock = build_common_event(num_runs=5, p_event=0.5,shock_low=0.3, shock_high=0.6,seed=0)
+    >>> flags, shock = build_common_event(num_runs=5, p_event=0.5,shock_low=0.3, shock_high=0.6)
     >>> len(flags)
     5
     >>> len(shock)

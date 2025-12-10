@@ -4,7 +4,7 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
 import numpy as np
 
-def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
+def precompute_runs(G, cogs_map, total_runs, p_fail, root):
     """
     To precompute the results for a group of simulations so that the computation while animation the simulation is not required.
 
@@ -30,7 +30,7 @@ def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
     suppliers = [n for n, d in G.in_degree() if d == 0]
     industries = [n for n in G.predecessors(root)]
     sup_idx = {s:i for i, s in enumerate(suppliers)}
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng()
 
     n_sup = len(suppliers)
 
@@ -101,7 +101,7 @@ def animate_mc_snapshots(
     # --- precompute (or reuse) ---
     if precomp is None:
         suppliers, industries, damage, all_cogs, bneck_idx = precompute_runs(
-            G, cogs_map, total_runs=10_000, p_fail=p_fail, root=root_node, seed=1
+            G, cogs_map, total_runs=10_000, p_fail=p_fail, root=root_node
         )
     else:
         suppliers, industries, damage, all_cogs, bneck_idx = precomp
@@ -291,7 +291,7 @@ if __name__ == "__main__":
         top_2_names
     ) = simulation(G, industry_cogs)
 
-    PRECOMP = precompute_runs(G, industry_cogs, total_runs=10_000, p_fail=P_FAIL_BASE, root='Tesla', seed=1)
+    PRECOMP = precompute_runs(G, industry_cogs, total_runs=10_000, p_fail=P_FAIL_BASE, root='Tesla')
 
     ANIM, FIG = animate_mc_snapshots(
         G, industry_cogs,
