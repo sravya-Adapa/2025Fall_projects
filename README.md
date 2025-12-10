@@ -215,9 +215,8 @@ The simulation is linear in the number of edges per run (efficient), separates *
     - remaining availability per industry,
     - **industry loss** (baseline COGS × severity passed through its suppliers), and
     - **share of total loss** contributed by each industry.
-- **Top-2 share**. Industries are ranked by loss **within each run**, their combined share forms the **Top-2 share** for that run. The 10,000 values form the sampling distribution used for inference.
-
-### Statistical test
+- **Top-2 share**. The two industries with the largest baseline COGS weights are identified (**Primary Metals and Fabricated Metal Products**). For every simulation run, the model calculates the specific loss contributed by these two categories relative to the total system loss, forming the sampling distribution used for inference.
+- ## Statistical test
 - **Null (H₀)**: mean Top-2 loss share <= **0.50**.
 - **Alternative (H₁)**: mean Top-2 loss share > **0.50 (dominance)**.
 - **Estimator**: sample mean of the 10,000 Top-2 shares.
