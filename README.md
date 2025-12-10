@@ -284,10 +284,85 @@ Bars show **average loss by industry ($ B)** across all runs, the highlighted ov
 
 ## Hypothesis 2
 
+**H2 statement**: Within a component category, spreading volume across more suppliers (i.e., lowering concentration/HHI) should **reduce both the average loss and the tail loss (p95)** compared with keeping one dominant supplier at the same total category weight.
+
+### Experimental design
+- **Control (concentrated)**: the same supplier set is kept, but one supplier is forced to **80% share** and the remaining suppliers split the **other 20% randomly**.
+- **Treatment (diversified)**: the same supplier set is reweighted to **equal shares** (minimum HHI for a fixed set).
+- **Everything else identical**: total category weight into Tesla, failure probability, severity distribution, graph topology.
+- **Common random numbers**: both arms use the **same 10,000 shock paths**, so any difference is due to reweighting, not luck.
+
+### Core measures and tests
+- **Herfindahl–Hirschman Index (HHI)**: `HHI = ∑s_i^2` using fractional shares.
+  - **Closer to 1 → concentrated** (e.g., 80/20 ≈ 0.68).
+  - **Closer to 0 → diversified** (e.g., equal across 9 suppliers ≈ 0.11).
+- **Mean-loss reduction**: compute per-run paired differences `d_r = Loss_control,r − Loss_treat,r`. Use a **paired t-test** on `d_r` (large-sample t; 95% CI). Here positive mean `d_r`
+  with **p < 0.05** which concludes diversification lowers average loss.
+- **Tail-loss reduction**: compute **p95(loss)** in each arm and take the difference. A **paired bootstrap** (resampling runs with replacement) gives a p-value. Here positive p95 difference with **p < 0.05** concludes diversification lowers tail risk.
+- Hence H2 is supported for a category when both mean-loss and tail-loss tests are positive and significant.
+
+### Focus Industry - `Computer and electronic products`
+Over here the target industry is selected and the results associated with this is as shown in the below figure.
+
+<center>
+  <img width="424" height="324" alt="industry specific results" src="https://github.com/user-attachments/assets/f1a08f92-0c8f-491c-a187-654eaf2ffc5d" />
+</center>
+
+Despite a large HHI drop (0.65 → 0.11), neither the **average loss** nor the **p95 loss** improves significantly. The histogram overlay shows nearly overlapping loss distributions, and the QQ plot of paired differences shows many differences clustered near zero with only a few large positives—insufficient for significance. **Conclusion for this category: does not support Hypothesis 2**.
+
+### Cross Industry results
+Over here, the results were derived for each and every industry to get the industry-specific hypothesis testing.
+
+<center>
+  <img width="1378" height="251" alt="image" src="https://github.com/user-attachments/assets/90dc600d-5abf-4d5b-9a95-6ac7e9c881cf" />
+</center>
+
+The benefit of diversification depends on **how that category connects into the network** (its total weight into Tesla), the **number and balance of its suppliers**, and how often it becomes the **bottleneck** when shocks hit. In some categories (e.g., **Fabricated metal products**), equalizing shares **materially reduces extreme shortfalls**, producing significant **mean and tail** improvements. In others, losses are driven by **systemic effects or other categories**, so reweighting within the category has **limited impact**. Here the for the conclusion column, the decision was made on the basis of mean-loss reduction > 0 with p < 0.05 (paired t-test) and  p95-loss reduction > 0 with p < 0.05 (paired bootstrap).
+
+
+### Figure: Histogram overlay plot — Control vs Treatment loss (Billions USD)
+A side-by-side (overlaid) histogram of the **per-run total loss** for the two arms:
+- **Blue** = concentrated control (80/20).
+- **Orange** = diversified treatment (equal shares).
+Each bar counts how many of the 10,000 runs produced a loss that falls inside that bin. If the orange mass consistently sits to the left of blue, treatment tends to lower losses, to the right means higher losses, on top of each other means no material difference.
+
+**The analysis for the industry Computer and electronic products**
+- The two histograms **almost coincide** across the support, including the right tail.
+- There is **no visible bulk shift** of orange relative to blue.
+- This matches the statistics: tiny mean-loss difference (~$0.003B) and non-significant p-value (~0.70).
+- So for this category, equalizing supplier shares **did not materially change** the distribution of total losses under the current failure rate/severity and network bottlenecks.
+
+Because the **entire distribution** (center and tail) is almost unchanged, there is **no distributional evidence** here that diversification reduces loss.
+
+<center>
+  <img width="596" height="543" alt="plot 1" src="https://github.com/user-attachments/assets/7051e0fa-62a3-4602-83e8-527d63f804e6" />
+</center>
+
+### Figure: QQ plot — Paired differences vs Normal(μ,σ)
+A quantile–quantile (QQ) plot of the paired per-run differences 
+`d_r = Loss_control,r − Loss_treat,r` against a reference **Normal(μ,σ)** with the same sample mean and standard deviation as `d_r`.
+
+- **X-axis**: “theoretical” normal quantiles (what would be expected if `d_r` were perfectly normal).
+- **Y-axis**: empirical quantiles of `d_r` in dollars.
+- The **45° line** is the “perfect normal” benchmark.
+    - Points on the line → data follow Normal(μ,σ).
+    - Points **above** the line on the right → **heavier right tail** (some runs where control ≫ treatment, i.e., large positive benefit from diversification).
+    - Points **below** the line on the left → **heavier left tail** (some runs where treatment is worse).
+    - Flat **horizontal segments near 0 → many runs with very small differences** (mass at/near zero, because those nodes were never failed in the mc run).
+- A **long, flat band near zero**: the vast majority of paired differences are **very small**, reweighting often does **almost nothing** because the bottleneck lies elsewhere or shocks don’t hit the dominant supplier hard enough.
+- A **handful of large positive points** far above the line are **rare scenarios** where diversification helps a **lot** (big control-minus-treatment gains).
+- Some modest negatives on the left, a **few** runs where diversification slightly **hurts**.
+
+Overall, the distribution is **non-normal and highly skewed**, dominated by **near-zero differences** with **few large positives**—consistent with **a small mean** and **wide variance**, hence the **non-significant** paired t-test.
+
+<center>
+  <img width="583" height="539" alt="plot 2" src="https://github.com/user-attachments/assets/2a38d90c-5c4f-4810-a0a6-829caaef90d9" />
+</center>
 
 ---
 
 ## Hypothesis 3
+
 
 ---
 
