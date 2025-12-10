@@ -457,6 +457,7 @@ if __name__ == "__main__":
                 "display.expand_frame_repr", False,
                 "display.float_format", lambda x: f"{x:,.3f}"
         ):
+
             print("\n=== H2 Experiment Summary Across Industries ===")
             print(tbl[
                       ["Industry", "HHI_base", "HHI_treat",
