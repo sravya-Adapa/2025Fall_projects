@@ -59,7 +59,7 @@ def precompute_runs(G, cogs_map, total_runs, p_fail, root, seed):
 def animate_mc_snapshots(
     G,
     cogs_map,
-    milestones=range(500, 10001, 500),
+    milestones=range(100, 10001, 100),
     pause_ms=10_000,
     p_fail=P_FAIL_BASE,
     cogs_per_vehicle=COGS_PER_VEHICLE_USD,
@@ -254,7 +254,7 @@ if __name__ == "__main__":
 
     ANIM, FIG = animate_mc_snapshots(
         G, industry_cogs,
-        milestones=range(500, 10001, 500),
+        milestones=range(100, 10001, 100),
         pause_ms=10_000,
         p_fail=P_FAIL_BASE,
         cogs_per_vehicle=COGS_PER_VEHICLE_USD,
