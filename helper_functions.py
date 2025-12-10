@@ -18,8 +18,6 @@ from statistics import NormalDist
 import matplotlib.patches as mpatches
 
 
-
-
 # CONFIGURATION
 NUM_SIMS = 10000 # number of monte carlo runs
 P_FAIL_BASE = 0.05 # baseline supplier failure probability
