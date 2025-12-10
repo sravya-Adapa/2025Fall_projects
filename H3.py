@@ -436,4 +436,13 @@ if __name__ == "__main__":
     quick_plots(res["control_loss"], res["clustered_loss"], title_suffix="(H3 common shock)")
 
 
-
+"""
+Disclaimer:
+This project was developed with assistance from GPT. 
+GPT was used to:
+  • suggest statistical methods for hypothesis-testing,
+  • help to debug errors and improve code structure,
+  • refine syntax for Python, NumPy, NetworkX, and plotting libraries,
+  • helped with complex doctests,
+  • and clarify conceptual questions during development.
+"""

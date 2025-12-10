@@ -139,7 +139,19 @@ def simulation(G: nx.DiGraph, cogs_map: dict):
 
 
 
-def print_h1_results(stats_data, loss_shares, top_2_names):
+def print_h1_results(stats_data: dict, loss_shares: list, top_2_names: list):
+    """
+    This function prints the results of the H1 simulation results.
+      1. Original and average simulated COGS per industry
+      2. Frequency of becoming a bottleneck
+      3. Average severity of impact
+      4. Contribution of the top-2 industries to total simulated loss
+      5. One-sample t-test comparing the loss share of top-2 industries against 50%
+    :param stats_data: dict. Summary statistics returned from the simulation().
+    :param loss_shares: list of float Per-run share of total loss contribution of the top 2 industries.
+    :param top_2_names: list[str]. Names of the top 2 industries by baseline COGS.
+    :return: None
+    """
 
     total_loss = sum(d["avg_loss"] for d in stats_data.values())
     sorted_inds = sorted(stats_data.keys(),
@@ -191,7 +203,15 @@ def print_h1_results(stats_data, loss_shares, top_2_names):
         print("\nH1 DOES NOT SUPPORT.")
 
 
-def plot_h1_results(stats_data, loss_shares, top_2_names):
+def plot_h1_results(stats_data: dict, loss_shares: list, top_2_names: list):
+    """
+    To plot the H1 results. It plots a Histogram to show the % of loss contribution distribution for top 2 categories and also highlights the mean % of loss contribution
+    and the test threshold which is 50%. It also plots a bar graph to show the total average loss for each industry.
+    :param stats_data: dict. Summary statistics returned from the simulation().
+    :param loss_shares: list of float Per-run share of total loss contribution of the top 2 industries.
+    :param top_2_names: list[str]. Names of the top 2 industries by baseline COGS.
+    :return: None
+    """
 
     sorted_inds = sorted(stats_data.keys(),
                          key=lambda k: stats_data[k]["original_cogs"],
