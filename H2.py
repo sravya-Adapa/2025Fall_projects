@@ -1,8 +1,5 @@
 from helper_functions import *
 
-
-
-
 """
 Hypothesis 2: Within a industry category, spreading volume across more suppliers (lower concentration/HHI) 
 will reduce both average loss and tail risk compared with keeping one dominant supplier at the same total 
@@ -460,7 +457,7 @@ if __name__ == "__main__":
                 "display.expand_frame_repr", False,
                 "display.float_format", lambda x: f"{x:,.3f}"
         ):
-            print("\n=== HHI Experiment Summary Across Industries ===")
+            print("\n=== H2 Experiment Summary Across Industries ===")
             print(tbl[
                       ["Industry", "HHI_base", "HHI_treat",
                        "MeanLossReduction_B", "t_stat", "p_mean",
