@@ -20,6 +20,12 @@ HHI = ∑𝑖 𝑠𝑖^2.Lower HHI → diversified (e.g., equal split); higher H
 def hhi(shares01: Dict[str, float]) -> float:
     """Herfindahl–Hirschman Index on fractional shares; HHI = ∑ s_i^2.
 
+    :param shares01 : Dict[str, float] Mapping of supplier name → fractional share in [0, 1]. The values are
+    expected to be normalized to sum to 1 for the industry/category.
+
+    :return: float The concentration index. Higher values indicate a more concentrated
+    (less diversified) supplier split; lower values indicate diversification.
+
     >>> hhi({"A": 0.25, "B": 0.25, "C": 0.25, "D": 0.25})
     0.25
     >>> round(hhi({"A": -0.2, "B": 0.3, "C": 0.5}), 6)
@@ -35,6 +41,12 @@ def hhi(shares01: Dict[str, float]) -> float:
 def reweight_suppliers_uniform(shares01: Dict[str, float]) -> Dict[str, float]:
     """
     Treatment: keep the same supplier set, assign equal shares (min HHI for fixed set).
+
+    :param shares01: Dict[str, float] Baseline mapping of supplier → fractional share in [0, 1]. Only the keys
+    (supplier set) are used; values are ignored except to infer the set size.
+
+    :return: Dict[str, float] New mapping with the same keys and equal shares that sum to 1.
+
     >>> reweight_suppliers_uniform({})
     {}
 
@@ -64,12 +76,12 @@ def reweight_suppliers_concentrated(
     CONTROL: concentrated split inside the SAME supplier set.
     Default: 80% to the largest-current-share supplier; remaining 20% split randomly among the others.
 
-    Args
-    ----
-    shares01 : dict of {supplier: share} that sum to 1 (baseline from graph)
-    top_frac : share for the 'dominant' supplier (e.g., 0.80)
-    pick     : "largest" or a supplier name (to force a specific supplier)
-    seed     : RNG seed for reproducible splits among the rest
+    :param shares01 : dict of {supplier: share} that sum to 1 (baseline from graph)
+    :param top_frac : share for the 'dominant' supplier (e.g., 0.80)
+    :param pick     : "largest" or a supplier name (to force a specific supplier)
+    :param seed     : RNG seed for reproducible splits among the rest
+
+    :return: Dict[str, float] New mapping with the same keys and a concentrated split that sums to 1.
 
     >>> reweight_suppliers_concentrated({})
     {}
@@ -138,6 +150,21 @@ def _prepare_industry_inputs(
       - original COGS per industry
       - supplier share list per industry: {industry: [(supplier, share01), ...], ...}
     If overrides_for_industry is provided, it should be {industry: {supplier: share01,...}}.
+
+    :param G : nx.DiGraph Directed graph with edges supplier → industry → `root`.
+    :param cogs_map : Dict[str, float] Mapping of industry name → COGS dollar amount. Must contain entries for
+    all industries that point to `root`.
+    :param overrides_for_industry : Optional[Dict[str, Dict[str, float]]], optional. Optional per-industry share
+    overrides in [0, 1], e.g.{ "Computer and electronic products": {"SupplierA": 0.4, "SupplierB": 0.6} }.
+    Shares are re-normalized if they do not sum to 1.
+    :param root : str, optional Name of the root product node (default "Tesla").
+
+
+    :return industries : List[str] Ordered list of industry nodes that have edges into `root`.
+    :return orig_cogs : Dict[str, float] Mapping industry → original COGS dollars (float).
+    :return ind_sup_shares : Dict[str, List[Tuple[str, float]]] For each industry, a list of (supplier, fractional_share)
+    pairs used bythe simulator.
+
     >>> import networkx as nx
     >>> G = nx.DiGraph()
     >>> # Tesla has two industries feeding it
@@ -200,6 +227,15 @@ def simulate_with_draws(
         percentage_left[ind] = 1 - sum_over_sup( share * severity[r] )
         total_cogs[r] = sum( orig_cogs[ind] * percentage_left[ind] )
     (If a supplier didn't fail at run r, severity[r]==0, so it contributes nothing.)
+
+    :param industries : List[str] Industries that feed into the root node.
+    :param orig_cogs : Dict[str, float] Mapping industry → original COGS dollars.
+    :param ind_sup_shares : Dict[str, List[Tuple[str, float]]]Mapping industry → list of (supplier, fractional_share) pairs.
+    :param draws : Dict[str, Tuple[np.ndarray, np.ndarray]] Mapping supplier → (fail_flags, severities). Severities must be length
+    `num_runs` and already zeroed where fail_flags is False.
+    :param num_runs : int Number of Monte Carlo runs.
+
+    :return: np.ndarray Array of shape (num_runs,) with the simulated total available COGS per run.
     """
     out = np.zeros(num_runs, dtype=np.float64)
     for r in range(num_runs):
@@ -239,6 +275,22 @@ def run_h2_experiment(
     CONTROL: concentrated (80/20 random across the same supplier set).
     TREATMENT: uniform across the same supplier set.
     Uses the SAME random shocks for both arms (paired test). Returns metrics and series.
+
+    :param G : nx.DiGraph Directed supply-chain graph (supplier → industry → root).
+    :param cogs_map : Dict[str, float] Mapping industry → COGS dollars.
+    :param target_industry : str, optional Industry whose within-category weights are modified (default shown).
+    :param num_runs : int, optional Number of Monte Carlo runs (default `NUM_SIMS`).
+    :param p_fail : float, optional Baseline supplier failure probability per run.
+    :param seed : int, optional Seed used for generating common random numbers.
+
+    :return: Dict[str, Any]
+        Dictionary containing:
+        - 'target_industry', 'base_hhi', 'treat_hhi'
+        - 'control_loss', 'treatment_loss'  (np.ndarray per-run losses)
+        - 'mean_diff', 't_stat', 'p_value_mean'
+        - 'ctrl_mean_CI', 'trt_mean_CI'
+        - 'ctrl_p95', 'trt_p95', 'p95_diff', 'p_value_tail'
+        - 'verdict' (string), and 'num_runs'.
     """
     # Base supplier set from the graph (used only to know which suppliers exist)
     base_shares = get_industry_suppliers_and_shares(G, target_industry)
@@ -272,6 +324,15 @@ def run_h2_experiment(
 
     # Mean + CI
     def _mean_ci(x: np.ndarray, level: float = 0.95) -> Tuple[float, float, float]:
+        """
+        Compute the sample mean and a two-sided (1−α) confidence interval via
+        a normal (z) approximation.
+
+        :param x: 1D array of observations.
+        :param level: Desired confidence level in (0,1). Currently only 0.95 is supported by the fixed z constant,
+        to support other levels, replace the hard-coded z with the appropriate quantile.
+        :return: Tuple (mean, lower_bound, upper_bound).
+        """
         m = float(x.mean())
         s = float(x.std(ddof=1))
         z = 1.959963984540054  # ~N(0,1) 97.5% quantile
@@ -339,6 +400,12 @@ Goals achieved in below functions:
 def quick_plots(loss_ctrl: np.ndarray, loss_trt: np.ndarray, title_suffix: str = ""):
     """
     Simple overlay histogram and QQ-plot of paired differences for a quick visual check.
+
+    :param loss_ctrl : np.ndarray Per-run losses for the control arm.
+    :param loss_trt : np.ndarray Per-run losses for the treatment arm.
+    :param title_suffix : str, optional Text appended to both subplot titles (e.g., '(H2 test)').
+
+    :return: None Plots are rendered with Matplotlib.
     """
 
     # 1) histogram overlay

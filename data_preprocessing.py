@@ -17,7 +17,8 @@ from pathlib import Path
 def parse_year_q(s):
     """
     This function will parse the year, quarter from the input string. It extracts 4 digit year lookinf like 20xx
-    and quarter [Q1,Q2,Q3,Q4,q1,q2,q3,q4]. It returns the quarter, year in the iput string
+    and quarter [Q1,Q2,Q3,Q4,q1,q2,q3,q4]. It returns the quarter, year in the iput string.
+
     :param s: input string
     :return: year, quarter
 
