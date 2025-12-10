@@ -30,35 +30,6 @@
   
 ---
 
-## Project Description
-This project simulates how disruptions in a **giant electric vehicle manufacturing firm like Tesla**, in their supplier network affect it’s ability to **produce vehicles and control production cost**.
-
-An EV manufacturer depends on key component families like **battery systems, power electronics, motors/drive units, body/metals, interior/trim, plastics/rubber, and electronics**. When supply shocks occur due to factory outages, quality recalls, logistics delays, or regional events inputs from critical suppliers can drop suddenly. These disruptions constrain component availability at the plant and reduce finished-vehicle.
-
-The Monte Carlo simulation combines:
-- **BEA Input–Output (Direct Requirements)** — to estimate **component-category weights** per $1 of motor-vehicle output as an proxy to “BOM (Bill of Materials) by category”) since the EV manufacturing company’s BOM data is proprietary.  
-- **Public supplier lists (articles)** — to derive a rough idea about the companies who contribute to Tesla’s EV production, and **map supplier names to component categories** for labeling the network.
-- **Firm public filings (units/COGS)** — Tesla’s quarterly financial reports provide data related to **number of EV quantities and cost of goods sold**, to scale results to an EV production context.
-
-The supply chain network is **two-layered** with:
-- **Layer 1 (BOM by category)**: the EV product node connects to component-category nodes, **edge weights** are the BEA-derived shares.
-- **Layer 2 (named suppliers)**: each category node connects to its known multiple suppliers whose names are derived from the publicly available articles, **within-category splits** are clearly marked assumptions (randomized allocations that sum to the category weight, used only for proof-of-concept exploration).
-
-Monte Carlo simulations introduce random disruptions to these supplier nodes across **10,000 runs**, capturing how failures in one or multiple suppliers propagate through the network. The model produces a **probabilistic assessment of production vulnerability**, identifying which component categories and supplier groupings contribute most to potential production shortfalls.
-
-A **NetworkX-based visualization** will illustrate the firm’s supplier network, EV product to component categories (weighted edges), then categories to labeled suppliers (assumed splits), highlighting **high-impact links** where simulated disruptions have the largest effect on production.
-
-
-## Hypotheses
-
-**H1:** Failures in high-weight component categories (battery systems, electronics, primary metals) will drive most of the simulated production loss. In the baseline, the top **two categories** will account for the **majority** of expected production shortfalls.
-
-**H2:** Within a component category, **spreading volume across more suppliers** (lower concentration/HHI) will reduce both **average loss and tail risk** compared with keeping one dominant supplier at the same total category weight.
-
-**H3:** When **several suppliers fail together** due to a common event (same region or shared sub-tier), the simulated production loss will be **much higher** than under independent failures, with p95 loss rising sharply.
-
----
-
 ## Overview
 This project simulates how disruptions in a **giant electric vehicle manufacturing firm like Tesla**, in their supplier network, affect its ability to **produce vehicles and control production cost**.
 
@@ -363,10 +334,60 @@ Overall, the distribution is **non-normal and highly skewed**, dominated by **ne
 
 ## Hypothesis 3
 
+**H3 statement**: When several suppliers fail together due to a common event (e.g., shared sub-tier or region), production loss should rise materially versus independent failures, with a **marked increase in the p95 loss**.
+
+Over here, **the scenario framed for this hypothesis** was there is *one regional shock hits the `Computer and electronics products` industry, so due to which multiple upstream suppliers to that industry are disrupted at once. In simulations, when this event occurs (with probability `pevent`), the whole cluster fails together with drawn severities, while all other suppliers across the network still fail independently as in the baseline. So now MC model predicts that this correlated cluster shock will push both the mean loss and especially the p95 loss 
+markedly higher than the independent-failure baseline.*
+
+### Experiment design
+- **Cluster definition**. All supplier nodes feeding the `Computer and electronic products` industry (**9 suppliers** in the graph).
+- **Two matched arms**.
+    - **Independent baseline**: every supplier fails independently with probability `p_fail = 0.05`, severities `∼U[0.30,1.00]` applied to failed suppliers.
+    - **Clustered-shock arm**: identical draws as baseline **plus a common event** that occurs with probability **p_event = 0.10**. When it occurs in run `r`, a shock `S_r ∼ U[0.30,0.60]` is **added** to the severities of **all cluster suppliers** (clamped to 1.0). All other suppliers in the network remain independent.
+- **Paired comparison** The same random seeds are used for both arms to create **paired losses per run**, enabling a high-power **paired t-test** on the mean difference and a **paired bootstrap** test for the p95 difference.
+
+### Key parameters
+`Runs: 10,000 , p_fail=0.05 , p_event=0.10 , common shock S_r ∼ U[0.30,0.60]`
+
+### Results
+For the target specific industry `Computer and electronic products`, below figure shows the actual results.
+
+<center>
+  <img width="551" height="323" alt="h3 results" src="https://github.com/user-attachments/assets/d5a57bc4-657b-4cc4-b5a5-1d7dea37ced7" />
+</center>
+
+This test concludes that it **supports H3**. Both the average loss and the high-tail (p95) loss rise significantly when a common event simultaneously hits all suppliers in the targeted industry. When several suppliers fail together due to a common event (e.g., shared sub-tier or region), production loss should rise materially versus independent failures, with a **marked increase in the p95 loss**. 
+
+### Figure: Histogram overlay (Loss Distributions, H3)
+The **orange** clustered-shock distribution is visibly **right-shifted** relative to the **blue** independent baseline, with more mass at larger losses, evidence of higher expected loss and fatter tail under correlated failures.
+
+<center>
+  <img width="549" height="366" alt="plot 1" src="https://github.com/user-attachments/assets/8d85e9ac-5f37-43b0-a9a6-746baff4eb50" />
+</center>
+
+### Figure: QQ plot of paired differences
+Points plot empirical quantiles of (cluster − independent) loss against a normal reference with the same mean/SD.
+- The long **flat band near zero** reflects runs where no cluster event happened (differences ~0).
+- The **upper-right arc well above the 45° line** captures event runs where the common shock pushes losses much higher, these positive extremes drive the significant t-statistic and the larger p95.
+
+<center>
+  <img width="536" height="375" alt="plot 2" src="https://github.com/user-attachments/assets/42574ab9-0310-4fbd-babb-9ed3c824af6d" />
+</center
+
+This leads to the conclusion that a **common (clustered) shock materially raises average loss and—especially—amplifies the high-loss tail (p95) versus independent failures**.
 
 ---
 
 ## Limitations
+The primary limitation is **data availability**. Because detailed, firm-level bill-of-materials (BOM), supplier allocations, and sub-tier linkages are proprietary, the study is necessarily a **proof-of-concept** that demonstrates method and workflow rather than producing audited point estimates. The design is intentionally modular so it can be **re-run with real inputs** when they become available. 
+
+Results should be interpreted as **directional risk signals** identifying where concentration, clustering, or high-weight categories could drive losses **not as audited forecasts**. With access to 
+- **Company-specific BOM by category**
+- **Actual supplier allocations and capacities**
+- **sub-tier/region linkages**
+- **empirically estimated failure/repair distributions**
+
+The same code path can be re-run to produce **decision-grade** estimates and policy experiments.
 
 ---
 
@@ -379,6 +400,8 @@ To run the simulation, install the following dependencies:
 - Pandas
 - Matplotlib
 - NetworkX
+- SciPy
+- Tkinter (required by the `TkAgg` Matplotlib backend used in the live animation window)
 
 ---
 
