@@ -372,7 +372,7 @@ Points plot empirical quantiles of (cluster − independent) loss against a norm
 
 <center>
   <img width="536" height="375" alt="plot 2" src="https://github.com/user-attachments/assets/42574ab9-0310-4fbd-babb-9ed3c824af6d" />
-</center
+</center>
 
 This leads to the conclusion that a **common (clustered) shock materially raises average loss and—especially—amplifies the high-loss tail (p95) versus independent failures**.
 
