@@ -222,4 +222,8 @@ def build_independent_draws(
         out[s] = (fails, sev)
     return out
 
+"""
+GPT Disclaimer in H3.py
+"""
+
 
